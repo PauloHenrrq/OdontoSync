@@ -1,9 +1,9 @@
 # ODONTOSYNC — Roadmap & TODO
 
 ## Fase 1: Interface e Mock (Design First)
-- [ ] Inicializar projeto React Native com Expo e pnpm.
+- [x] Inicializar projeto React Native com Expo e pnpm.
 - [ ] Configurar TypeScript Strict, Eslint, Prettier e Alias de Paths.
-- [ ] Configurar roteamento com Expo Router (ou React Navigation).
+- [x] Configurar roteamento com Expo Router (ou React Navigation).
 - [ ] Criar Mock Data (Zod/JSON) para Usuários e Agendamentos.
 - [ ] Implementar UI de Login (troca de estado local via Mock).
 - [ ] Implementar UI da Agenda do Dia (Recepcionista).
