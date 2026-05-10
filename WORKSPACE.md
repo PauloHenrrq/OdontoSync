@@ -59,4 +59,14 @@ O projeto utiliza o **Expo Router** (roteamento baseado em arquivos), onde a est
 - **Não deletar:** Registros são marcados com `status`, nunca removidos do banco.
 
 ---
-*Última atualização: 2026-04-26*
+*Última atualização: 2026-05-10*
+
+## 📓 Progress Log
+> Mantido via `/log`.
+
+<!-- LOG_START -->
+- [2026-05-10] setup: Sincronização do repositório remoto e preservação da arquitetura local
+  - What: Resolvido conflito de arquivos de configuração, mesclando estrutura base do Expo sem sobrepor a governança local de arquivos Markdown.
+  - Workflows: `/log`, `/arch`, `/doc`
+  - Next: Avançar para a conclusão das configurações iniciais (Alias, Lint, NativeWind).
+<!-- LOG_END -->

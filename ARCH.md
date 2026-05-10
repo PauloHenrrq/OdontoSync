@@ -45,7 +45,63 @@ graph TD
 
 ---
 
-## 3. Pilares Técnicos
+## 3. Data Flow
+
+```mermaid
+graph TD
+    %% Entidades Principais
+    User[Usuário]
+    App[Mobile App Expo]
+    State[Zustand Store]
+    API[Mock API / Server]
+    
+    %% Fluxo de Ações
+    User -- Interage com UI --> App
+    App -- Dispara Ação --> State
+    State -- Verifica Cache/Mutação --> API
+    API -- Retorna Dados --> State
+    State -- Atualiza UI --> App
+    
+    %% Detalhamento
+    subgraph Frontend
+        App
+        State
+    end
+    
+    subgraph Backend
+        API
+    end
+```
+
+---
+
+## 4. Component Tree
+
+```mermaid
+graph TD
+    Root["App Root (_layout.tsx)"] --> AuthStack["Auth Stack"]
+    Root --> MainStack["Main Stack (app)"]
+    
+    %% Auth
+    AuthStack --> LoginScreen["Login Screen"]
+    
+    %% Main App (Tabs)
+    MainStack --> TabsLayout["Tabs Layout (_layout.tsx)"]
+    TabsLayout --> HomeTab["Home Tab (index.tsx)"]
+    TabsLayout --> CalendarTab["Agenda Tab (calendar.tsx)"]
+    TabsLayout --> ProfileTab["Perfil Tab (profile.tsx)"]
+    
+    %% Detalhes Internos
+    HomeTab --> AppointmentList["AppointmentList Component"]
+    AppointmentList --> AppointmentCard["AppointmentCard Component"]
+    
+    CalendarTab --> MonthView["MonthView Component"]
+    MonthView --> DayCell["DayCell Component"]
+```
+
+---
+
+## 5. Pilares Técnicos
 Adoção de **Frontend-First** com desacoplamento total do Backend.
 
 - **Interface**: React Native + Expo + NativeWind (Tailwind).
@@ -55,7 +111,7 @@ Adoção de **Frontend-First** com desacoplamento total do Backend.
 
 ---
 
-## 4. Organização de Pastas (True North)
+## 6. Organização de Pastas (True North)
 Estrutura pensada para isolar lógica de negócio de componentes visuais.
 
 ```text
@@ -69,10 +125,12 @@ src/
 
 ---
 
-## 5. Fluxo de Notificações
+## 7. Fluxo de Notificações
 - **Automático**: Se o paciente tem o App, recebe Push.
 - **Semi-Automático**: Se não tem o App, a recepcionista clica no ícone do WhatsApp para disparar a mensagem pré-configurada.
 
 > [!IMPORTANT]
 > **Regra de Ouro**: Nunca deletar registros. Usar `status` (active, cancelled, completed) para rastrear o histórico.
 
+---
+*Atualizado via `/arch` em 2026-05-10*
