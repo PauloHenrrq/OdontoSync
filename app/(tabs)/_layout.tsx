@@ -31,7 +31,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Tua mae de 4',
+          title: 'primario',
           tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
           headerRight: () => (
             <Link href="/modal" asChild>
@@ -59,9 +59,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="tres"
         options={{
-          title: 'tres de 4',
+          title: 'tres',
           tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-          
+
         }}
       />
 
