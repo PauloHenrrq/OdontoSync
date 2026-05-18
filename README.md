@@ -41,11 +41,11 @@ O **OdontoSync** nasce para resolver o gap de comunicação entre consultórios 
 1. Clone o repositório e acesse a pasta.
 2. Instale as dependências:
    ```bash
-   pnpm install
+   npm install
    ```
 3. Inicie o ambiente de desenvolvimento:
    ```bash
-   pnpm start
+   npm start
    ```
 
 ---
@@ -73,7 +73,8 @@ Este projeto segue a filosofia de **Construção por Camadas**. Antes de codific
 ---
 
 ## 👤 Autor
-**Paulo Henrique** — *Tech Lead & Full Stack Developer*
+**Paulo Henrique** 
+**Levi Duarte**
 
 ---
 > [!TIP]
