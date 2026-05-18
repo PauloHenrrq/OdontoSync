@@ -73,7 +73,7 @@ Este projeto segue a filosofia de **Construção por Camadas**. Antes de codific
 ---
 
 ## 👤 Autor
-**Paulo Henrique** 
+**Paulo Henrique**  
 **Levi Duarte**
 
 ---
