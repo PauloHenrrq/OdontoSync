@@ -1,44 +1,70 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
+// ============================================================
+// OdontoSync — Root Layout
+// Navegação condicional por autenticação e role (RBAC).
+// Carrega fontes Manrope + Inter do Design System.
+// ============================================================
+
 import { useEffect } from 'react';
+import { Stack, useRouter, useSegments } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
+import { useFonts as useManrope, Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold } from '@expo-google-fonts/manrope';
+import { useFonts as useInter, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
+import { useAuthStore } from '@/src/stores/authStore';
+import { UserRole } from '@/src/types';
+
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/components/useColorScheme';
+export { ErrorBoundary } from 'expo-router';
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
-
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
-};
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
+function useProtectedRoute() {
+  const { isAuthenticated, user } = useAuthStore();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    const inAuthGroup = segments[0] === '(auth)';
+    const inClientGroup = segments[0] === '(client)';
+    const inAdminGroup = segments[0] === '(admin)';
+
+    if (!isAuthenticated && !inAuthGroup) {
+      // Não autenticado → redireciona para login
+      router.replace('/(auth)/login');
+    } else if (isAuthenticated && inAuthGroup) {
+      // Autenticado mas está na tela de auth → redireciona por role
+      if (user?.role === UserRole.ADMIN) {
+        router.replace('/(admin)');
+      } else {
+        router.replace('/(client)');
+      }
+    }
+  }, [isAuthenticated, segments, user]);
+}
+
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-    ...FontAwesome.font,
+  const [manropeLoaded] = useManrope({
+    Manrope_400Regular,
+    Manrope_500Medium,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
+  const [interLoaded] = useInter({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
 
   useEffect(() => {
-    if (loaded) {
+    if (manropeLoaded && interLoaded) {
       SplashScreen.hideAsync();
     }
-  }, [loaded]);
+  }, [manropeLoaded, interLoaded]);
 
-  if (!loaded) {
+  if (!manropeLoaded || !interLoaded) {
     return null;
   }
 
@@ -46,14 +72,16 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  useProtectedRoute();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+    <>
+      <StatusBar style="dark" />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(client)" />
+        <Stack.Screen name="(admin)" />
       </Stack>
-    </ThemeProvider>
+    </>
   );
 }
