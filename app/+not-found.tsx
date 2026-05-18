@@ -1,17 +1,17 @@
 import { Link, Stack } from 'expo-router';
-import { StyleSheet } from 'react-native';
-
-import { Text, View } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native';
+import { colors, fonts, fontSizes } from '@/src/styles/tokens';
 
 export default function NotFoundScreen() {
   return (
     <>
       <Stack.Screen options={{ title: 'Oops!' }} />
       <View style={styles.container}>
-        <Text style={styles.title}>This screen doesn't exist.</Text>
-
+        <Text style={styles.emoji}>🦷</Text>
+        <Text style={styles.title}>Página não encontrada</Text>
+        <Text style={styles.subtitle}>Essa rota não existe no OdontoSync.</Text>
         <Link href="/" style={styles.link}>
-          <Text style={styles.linkText}>Go to home screen!</Text>
+          <Text style={styles.linkText}>Voltar ao início</Text>
         </Link>
       </View>
     </>
@@ -24,17 +24,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: colors.background,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  link: {
-    marginTop: 15,
-    paddingVertical: 15,
-  },
-  linkText: {
-    fontSize: 14,
-    color: '#2e78b7',
-  },
+  emoji: { fontSize: 48, marginBottom: 16 },
+  title: { fontFamily: fonts.headline, fontSize: fontSizes.headlineSm, color: colors.onSurface, marginBottom: 8 },
+  subtitle: { fontFamily: fonts.body, fontSize: fontSizes.bodyMd, color: colors.onSurfaceVariant },
+  link: { marginTop: 24, paddingVertical: 12, paddingHorizontal: 24, backgroundColor: colors.primaryFixed, borderRadius: 20 },
+  linkText: { fontFamily: fonts.label, fontSize: fontSizes.labelLg, color: colors.primary },
 });
