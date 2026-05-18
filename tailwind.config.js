@@ -1,10 +1,109 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  // NOTE: Update this to include the paths to all files that contain Nativewind classes.
-  content: ["./app/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx}"],
-  presets: [require("nativewind/preset")],
+  content: [
+    './app/**/*.{js,jsx,ts,tsx}',
+    './src/**/*.{js,jsx,ts,tsx}',
+    './components/**/*.{js,jsx,ts,tsx}',
+  ],
+  presets: [require('nativewind/preset')],
   theme: {
-    extend: {},
+    extend: {
+      // Clinical Serenity — Design System Tokens
+      colors: {
+        primary: {
+          DEFAULT: '#006763',
+          container: '#14827C',
+          fixed: '#96F3EB',
+          'fixed-dim': '#79D6CF',
+        },
+        secondary: {
+          DEFAULT: '#516160',
+          container: '#D2E3E2',
+          fixed: '#D5E6E4',
+          'fixed-dim': '#B9CAC8',
+        },
+        tertiary: {
+          DEFAULT: '#8D492B',
+          container: '#AB6141',
+          fixed: '#FFDBCE',
+          'fixed-dim': '#FFB598',
+        },
+        surface: {
+          DEFAULT: '#F8F9F9',
+          bright: '#F8F9F9',
+          container: '#EDEEEE',
+          'container-high': '#E7E8E8',
+          'container-highest': '#E1E3E3',
+          'container-low': '#F3F4F4',
+          'container-lowest': '#FFFFFF',
+          dim: '#D9DADA',
+          tint: '#006A65',
+          variant: '#E1E3E3',
+        },
+        on: {
+          primary: '#FFFFFF',
+          'primary-container': '#F3FFFD',
+          secondary: '#FFFFFF',
+          'secondary-container': '#566665',
+          tertiary: '#FFFFFF',
+          'tertiary-container': '#FFFBFF',
+          surface: '#191C1C',
+          'surface-variant': '#3E4948',
+          background: '#191C1C',
+          error: '#FFFFFF',
+          'error-container': '#93000A',
+        },
+        error: {
+          DEFAULT: '#BA1A1A',
+          container: '#FFDAD6',
+        },
+        outline: {
+          DEFAULT: '#6E7978',
+          variant: '#BDC9C7',
+        },
+        background: '#F8F9F9',
+        inverse: {
+          surface: '#2E3131',
+          'on-surface': '#F0F1F1',
+          primary: '#79D6CF',
+        },
+      },
+      fontFamily: {
+        manrope: ['Manrope'],
+        inter: ['Inter'],
+      },
+      fontSize: {
+        'display-lg': ['57px', { lineHeight: '64px', letterSpacing: '-0.02em' }],
+        'display-md': ['45px', { lineHeight: '52px' }],
+        'display-sm': ['36px', { lineHeight: '44px' }],
+        'headline-lg': ['32px', { lineHeight: '40px' }],
+        'headline-md': ['28px', { lineHeight: '36px' }],
+        'headline-sm': ['24px', { lineHeight: '32px' }],
+        'title-lg': ['22px', { lineHeight: '28px' }],
+        'title-md': ['16px', { lineHeight: '24px', fontWeight: '500' }],
+        'title-sm': ['14px', { lineHeight: '20px', fontWeight: '500' }],
+        'body-lg': ['16px', { lineHeight: '24px' }],
+        'body-md': ['14px', { lineHeight: '20px' }],
+        'body-sm': ['12px', { lineHeight: '16px' }],
+        'label-lg': ['14px', { lineHeight: '20px', fontWeight: '500' }],
+        'label-md': ['12px', { lineHeight: '16px', fontWeight: '500' }],
+        'label-sm': ['11px', { lineHeight: '16px', fontWeight: '500' }],
+      },
+      borderRadius: {
+        sm: '8px',
+        md: '24px',
+        lg: '32px',
+      },
+      spacing: {
+        xs: '4px',
+        sm: '8px',
+        md: '16px',
+        lg: '24px',
+        xl: '32px',
+        '2xl': '48px',
+        '3xl': '64px',
+      },
+    },
   },
   plugins: [],
-}
+};

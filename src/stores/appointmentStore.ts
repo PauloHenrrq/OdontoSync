@@ -1,0 +1,90 @@
+// ============================================================
+// OdontoSync — Appointment Store (Zustand)
+// Gerencia agendamentos do paciente e da clínica.
+// ============================================================
+
+import { create } from 'zustand';
+import {
+  Appointment,
+  AppointmentStatus,
+  BookingDTO,
+} from '@/src/types';
+import {
+  mockAppointments,
+  getAppointmentsByUser,
+  getAppointmentsByDate,
+} from '@/src/mocks/appointments';
+import { AppointmentService } from '@/src/services/appointmentService';
+
+interface AppointmentState {
+  appointments: Appointment[];
+  isLoading: boolean;
+
+  // Patient actions
+  getMyAppointments: (userId: string) => Appointment[];
+  getNextAppointment: (userId: string) => Appointment | undefined;
+  bookAppointment: (userId: string, phone: string, booking: BookingDTO) => Promise<boolean>;
+  cancelAppointment: (appointmentId: string) => void;
+  updateAppointmentStatus: (appointmentId: string, status: AppointmentStatus) => void;
+
+  // Admin actions
+  getTodayAppointments: (date: string) => Appointment[];
+}
+
+export const useAppointmentStore = create<AppointmentState>((set, get) => ({
+  appointments: [...mockAppointments],
+  isLoading: false,
+
+  getMyAppointments: (userId) => {
+    return get().appointments.filter((a) => a.userId === userId);
+  },
+
+  getNextAppointment: (userId) => {
+    const today = new Date().toISOString().split('T')[0] ?? '';
+    return get()
+      .appointments.filter(
+        (a) =>
+          a.userId === userId &&
+          a.date >= today &&
+          (a.status === AppointmentStatus.CONFIRMED ||
+            a.status === AppointmentStatus.PENDING)
+      )
+      .sort((a, b) => a.date.localeCompare(b.date))[0];
+  },
+
+  bookAppointment: async (userId, phone, booking) => {
+    set({ isLoading: true });
+    const newAppointment = await AppointmentService.book(userId, phone, booking);
+
+    if (newAppointment) {
+      set((state) => ({
+        appointments: [...state.appointments, newAppointment],
+        isLoading: false,
+      }));
+      return true;
+    }
+    
+    set({ isLoading: false });
+    return false;
+  },
+
+  cancelAppointment: (appointmentId) => {
+    get().updateAppointmentStatus(appointmentId, AppointmentStatus.CANCELLED);
+  },
+
+  getTodayAppointments: (date) => {
+    return get()
+      .appointments.filter((a) => a.date === date)
+      .sort((a, b) => a.time.localeCompare(b.time));
+  },
+
+  updateAppointmentStatus: (appointmentId, status) => {
+    set((state) => ({
+      appointments: state.appointments.map((a) =>
+        a.id === appointmentId
+          ? { ...a, status, updatedAt: new Date().toISOString() }
+          : a
+      ),
+    }));
+  },
+}));
