@@ -1,12 +1,13 @@
 // OdontoSync — Client: Profile (Stitch: a3f71b04)
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LogOut, ChevronRight, History, Settings, Shield, HelpCircle, User } from 'lucide-react-native';
 import { Card } from '@/src/components/ui/Card';
 import { Avatar } from '@/src/components/ui/Avatar';
 import { Badge } from '@/src/components/ui/Badge';
+import { Alert } from '@/src/components/ui/Alert';
 import { useAuthStore } from '@/src/stores/authStore';
 import { useAppointmentStore } from '@/src/stores/appointmentStore';
 import { colors, fonts, fontSizes, spacing } from '@/src/styles/tokens';

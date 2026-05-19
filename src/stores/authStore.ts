@@ -18,7 +18,7 @@ interface AuthState {
   // Actions
   login: (emailOrPhone: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, phone: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -69,7 +69,8 @@ export const useAuthStore = create<AuthState>()(
         return true;
       },
 
-      logout: () => {
+      logout: async () => {
+        await AuthService.logout();
         set({
           user: null,
           isAuthenticated: false,

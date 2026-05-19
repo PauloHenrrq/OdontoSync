@@ -34,7 +34,7 @@ export async function clinicRoutes(app: FastifyInstance) {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const [confirmedToday, pendingContact, totalToday, noShowToday] = await Promise.all([
+    const [confirmedToday, pendingContact, totalToday, absencesToday] = await Promise.all([
       prisma.appointment.count({
         where: { date: { gte: today, lt: tomorrow }, status: 'CONFIRMED' },
       }),
@@ -45,17 +45,17 @@ export async function clinicRoutes(app: FastifyInstance) {
         where: { date: { gte: today, lt: tomorrow } },
       }),
       prisma.appointment.count({
-        where: { date: { gte: today, lt: tomorrow }, status: 'NO_SHOW' },
+        where: { date: { gte: today, lt: tomorrow }, status: 'ABSENT' },
       }),
     ]);
 
-    const noShowRate = totalToday > 0 ? Number(((noShowToday / totalToday) * 100).toFixed(1)) : 0;
+    const absenceRate = totalToday > 0 ? Number(((absencesToday / totalToday) * 100).toFixed(1)) : 0;
 
     return {
       kpis: {
         confirmedToday,
         pendingContact,
-        noShowRate,
+        absenceRate,
       },
     };
   });

@@ -44,3 +44,37 @@
   - Geração bem-sucedida do Prisma Client no banco de dados Neon DB e validação do build do backend em TypeScript Strict.
 - **Próximo Passo:** Configuração da string de conexão do Neon DB no `.env` do backend, execução do `prisma db push` / migração e início da integração da camada Service frontend com os endpoints reais da API.
 
+## 2026-05-18 (Continuação)
+
+- **Task:** Integração Completa Frontend-Backend (Neon DB + Fastify API)
+- **Status:** Concluído.
+- **Ações:**
+  - Criação do utilitário `api.ts` com interceptador de token JWT via `AsyncStorage`.
+  - Refatoração dos serviços `AuthService` e `AppointmentService` substituindo as chamadas mockadas por endpoints HTTP reais.
+  - Sincronização da store de Zustand (`appointmentStore`) para buscar dados em background no ciclo de autenticação do `RootLayout`.
+  - Criação do arquivo `.env` na raiz do frontend com suporte à variável dinâmica `EXPO_PUBLIC_API_URL`.
+  - Validação completa dos builds (`tsc` e `npx tsc --noEmit`) em ambos os lados sem qualquer erro de tipos.
+- **Próximo Passo:** Testar fluxos ponta a ponta com emulador/dispositivo real e planejar separação do repositório de backend.
+
+## 2026-05-18 (Web Dev & Seeding)
+
+- **Task:** Suporte Completo à Web (Zustand v5 ESM Fix) & Semeadura de Dados Físicos (Neon DB Seed)
+- **Status:** Concluído.
+- **Ações:**
+  - Correção do erro crítico de empacotamento web (`import.meta` em ESM do Zustand v5) injetando um interceptor customizado `resolveRequest` no [metro.config.js](file:///c:/Users/paulo/workspace/projetos/OdontoSync/metro.config.js) para forçar o uso da build CommonJS estável.
+  - Criação do script de sementes robusto [seed.ts](file:///c:/Users/paulo/workspace/projetos/OdontoSync/backend/src/seed.ts) no backend, populando a base ativa do Neon DB com especialidades odontológicas, clínica padrão, usuários e consultas (comuns e órfãs).
+  - Execução bem-sucedida do script de semeadura na nuvem Neon, preparando o ambiente para testes interativos instantâneos.
+- **Próximo Passo:** Executar testes visuais ponta a ponta na Web (Chrome DevTools Mobile Mode) e mapear melhorias de UX a partir do feedback do usuário.
+
+## 2026-05-18 (Correção de Rotas & Compatibilidade Web)
+
+- **Task:** Correção de Rotas `/auth`, Suporte Cross-Platform para `Alert` e Ajuste de Fluxos Web.
+- **Status:** Concluído.
+- **Ações:**
+  - **Correção da Rota de Login:** Ajuste dos caminhos de requisição de login e cadastro no frontend ([authService.ts](file:///c:/Users/paulo/workspace/projetos/OdontoSync/src/services/authService.ts)) de `/login` para `/auth/login` e `/auth/register` respectivamente, eliminando o erro de roteamento `404` do servidor Fastify.
+  - **Componente Cross-Platform Alert:** Criação do utilitário [Alert.ts](file:///c:/Users/paulo/workspace/projetos/OdontoSync/src/components/ui/Alert.ts) que intercepta as chamadas de confirmação em ambiente Web usando os diálogos padrão do navegador (`window.confirm`/`window.alert`), eliminando a inatividade de botões modais como o "Sair da Conta" no navegador.
+  - **Correção de "No-Show" (Faltas):** Correção da string de ação no botão de marcar falta na Agenda ([agenda.tsx](file:///c:/Users/paulo/workspace/projetos/OdontoSync/app/(admin)/agenda.tsx)) de `'marcar no-show'` para `'marcar falta'`, harmonizando-o com o validador interno e permitindo a alteração correta do status para `ABSENT`.
+- **Próximo Passo:** Prosseguir com os testes de usabilidade e aplicar melhorias visuais e estilizações conforme as orientações de UX fornecidas pelo usuário.
+
+
+

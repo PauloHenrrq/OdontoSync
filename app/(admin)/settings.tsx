@@ -1,12 +1,13 @@
 // OdontoSync — Admin: Settings (Stitch: ca2b18e4)
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LogOut, Bell, Clock, MessageSquare, Users, Shield, ChevronRight } from 'lucide-react-native';
 import { Card } from '@/src/components/ui/Card';
 import { Avatar } from '@/src/components/ui/Avatar';
 import { Input } from '@/src/components/ui/Input';
 import { Button } from '@/src/components/ui/Button';
+import { Alert } from '@/src/components/ui/Alert';
 import { useAuthStore } from '@/src/stores/authStore';
 import { useClinicStore } from '@/src/stores/clinicStore';
 import { colors, fonts, fontSizes, spacing } from '@/src/styles/tokens';
@@ -14,7 +15,7 @@ import { colors, fonts, fontSizes, spacing } from '@/src/styles/tokens';
 export default function SettingsScreen() {
   const { user, logout } = useAuthStore();
   const { config, updateConfig, team } = useClinicStore();
-  const [noShowReduction, setNoShowReduction] = useState(config.noShowReduction);
+  const [absenceReduction, setAbsenceReduction] = useState(config.absenceReduction);
 
   const handleLogout = () => {
     Alert.alert('Sair', 'Tem certeza que deseja sair?', [
@@ -24,8 +25,8 @@ export default function SettingsScreen() {
   };
 
   const toggleNoShow = (val: boolean) => {
-    setNoShowReduction(val);
-    updateConfig({ noShowReduction: val });
+    setAbsenceReduction(val);
+    updateConfig({ absenceReduction: val });
   };
 
   return (
@@ -48,9 +49,9 @@ export default function SettingsScreen() {
           <View style={s.settingRow}>
             <View style={s.settingLeft}>
               <View style={s.settingIcon}><Bell size={18} color={colors.primary} /></View>
-              <View><Text style={s.settingLabel}>Redução de No-Show</Text><Text style={s.settingSub}>Lembretes automáticos antes da consulta</Text></View>
+              <View><Text style={s.settingLabel}>Redução de Faltas</Text><Text style={s.settingSub}>Lembretes automáticos antes da consulta</Text></View>
             </View>
-            <Switch value={noShowReduction} onValueChange={toggleNoShow} trackColor={{ false: colors.surfaceContainerHigh, true: colors.primaryFixed }} thumbColor={noShowReduction ? colors.primary : colors.outline} />
+            <Switch value={absenceReduction} onValueChange={toggleNoShow} trackColor={{ false: colors.surfaceContainerHigh, true: colors.primaryFixed }} thumbColor={absenceReduction ? colors.primary : colors.outline} />
           </View>
           <View style={s.divider} />
           <View style={s.settingRow}>

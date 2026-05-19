@@ -58,7 +58,7 @@ export async function appointmentRoutes(app: FastifyInstance) {
   // Atualizar status
   app.patch('/:id/status', { preHandler: [app.requireAdmin] }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { status } = z.object({ status: z.enum(['CONFIRMED', 'CANCELLED', 'COMPLETED', 'NO_SHOW']) }).parse(request.body);
+    const { status } = z.object({ status: z.enum(['CONFIRMED', 'CANCELLED', 'COMPLETED', 'ABSENT']) }).parse(request.body);
 
     const appointment = await prisma.appointment.update({
       where: { id },

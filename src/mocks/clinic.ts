@@ -10,7 +10,7 @@ export const mockClinicConfig: ClinicConfig = {
   address: 'Av. Paulista, 1000 - São Paulo, SP',
   phone: '(11) 3333-4444',
   logoUrl: undefined,
-  noShowReduction: true,
+  absenceReduction: true,
   reminderHoursBefore: 24,
   confirmationTemplate:
     'Olá {nome}! Sua consulta no OdontoSync está confirmada para {data} às {hora}. Caso precise reagendar, acesse o app ou ligue para {telefone}.',
@@ -21,7 +21,7 @@ export const mockClinicConfig: ClinicConfig = {
 export const mockDashboardKPIs: DashboardKPIs = {
   confirmedToday: 24,
   pendingContact: 8,
-  noShowRate: 4.2,
+  absenceRate: 4.2,
 };
 
 export const mockTeamMembers: TeamMember[] = [
