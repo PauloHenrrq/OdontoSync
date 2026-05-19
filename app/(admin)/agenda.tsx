@@ -1,10 +1,11 @@
 // OdontoSync — Admin: Agenda (Stitch: 72b64cd6)
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, ChevronRight, Check, X, AlertTriangle } from 'lucide-react-native';
 import { Card } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
+import { Alert } from '@/src/components/ui/Alert';
 import { useAppointmentStore } from '@/src/stores/appointmentStore';
 import { useClinicStore } from '@/src/stores/clinicStore';
 import { AppointmentStatus } from '@/src/types';
@@ -25,7 +26,7 @@ export default function AgendaScreen() {
       { text: 'Sim', onPress: () => {
         if (action === 'confirmar') updateAppointmentStatus(id, AppointmentStatus.CONFIRMED);
         if (action === 'cancelar') cancelAppointment(id);
-        if (action === 'marcar no-show') updateAppointmentStatus(id, AppointmentStatus.NO_SHOW);
+        if (action === 'marcar falta') updateAppointmentStatus(id, AppointmentStatus.ABSENT);
         if (action === 'concluir') updateAppointmentStatus(id, AppointmentStatus.COMPLETED);
       }},
     ]);
@@ -78,7 +79,7 @@ export default function AgendaScreen() {
                   <TouchableOpacity style={s.actConfirm} onPress={() => handleAction(apt.id, 'concluir')}>
                     <Check size={16} color={colors.onPrimary} /><Text style={s.actTxtW}>Concluir</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={s.actWarn} onPress={() => handleAction(apt.id, 'marcar no-show')}>
+                  <TouchableOpacity style={s.actWarn} onPress={() => handleAction(apt.id, 'marcar falta')}>
                     <AlertTriangle size={16} color="#E65100" /><Text style={s.actTxtO}>No-Show</Text>
                   </TouchableOpacity>
                 </View>

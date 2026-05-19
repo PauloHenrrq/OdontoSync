@@ -11,6 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts as useManrope, Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold } from '@expo-google-fonts/manrope';
 import { useFonts as useInter, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 import { useAuthStore } from '@/src/stores/authStore';
+import { useAppointmentStore } from '@/src/stores/appointmentStore';
 import { UserRole } from '@/src/types';
 
 import 'react-native-reanimated';
@@ -21,6 +22,7 @@ SplashScreen.preventAutoHideAsync();
 
 function useProtectedRoute() {
   const { isAuthenticated, user } = useAuthStore();
+  const { fetchAppointments } = useAppointmentStore();
   const segments = useSegments();
   const router = useRouter();
 
@@ -32,12 +34,16 @@ function useProtectedRoute() {
     if (!isAuthenticated && !inAuthGroup) {
       // Não autenticado → redireciona para login
       router.replace('/(auth)/login');
-    } else if (isAuthenticated && inAuthGroup) {
-      // Autenticado mas está na tela de auth → redireciona por role
-      if (user?.role === UserRole.ADMIN) {
-        router.replace('/(admin)');
-      } else {
-        router.replace('/(client)');
+    } else if (isAuthenticated) {
+      // Autenticado, carrega dados e navega
+      fetchAppointments();
+      
+      if (inAuthGroup) {
+        if (user?.role === UserRole.ADMIN) {
+          router.replace('/(admin)');
+        } else {
+          router.replace('/(client)');
+        }
       }
     }
   }, [isAuthenticated, segments, user]);

@@ -22,7 +22,7 @@ export enum AppointmentStatus {
   CONFIRMED = 'CONFIRMED',
   COMPLETED = 'COMPLETED',
   CANCELLED = 'CANCELLED',
-  NO_SHOW = 'NO_SHOW',
+  ABSENT = 'ABSENT',
 }
 
 /** Canal de envio de notificação */
@@ -104,7 +104,7 @@ export interface ClinicConfig {
   address?: string;
   phone?: string;
   logoUrl?: string;
-  noShowReduction: boolean;
+  absenceReduction: boolean;
   reminderHoursBefore: number;
   confirmationTemplate: string;
   cancellationTemplate: string;
@@ -149,5 +149,5 @@ export interface BookingDTO {
 export interface DashboardKPIs {
   confirmedToday: number;
   pendingContact: number;
-  noShowRate: number;
+  absenceRate: number;
 }

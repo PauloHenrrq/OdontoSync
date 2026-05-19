@@ -9,31 +9,36 @@ import {
   AppointmentStatus,
   BookingDTO,
 } from '@/src/types';
-import {
-  mockAppointments,
-  getAppointmentsByUser,
-  getAppointmentsByDate,
-} from '@/src/mocks/appointments';
+
 import { AppointmentService } from '@/src/services/appointmentService';
 
 interface AppointmentState {
   appointments: Appointment[];
   isLoading: boolean;
 
+  // Load actions
+  fetchAppointments: () => Promise<void>;
+
   // Patient actions
   getMyAppointments: (userId: string) => Appointment[];
   getNextAppointment: (userId: string) => Appointment | undefined;
   bookAppointment: (userId: string, phone: string, booking: BookingDTO) => Promise<boolean>;
-  cancelAppointment: (appointmentId: string) => void;
-  updateAppointmentStatus: (appointmentId: string, status: AppointmentStatus) => void;
+  cancelAppointment: (appointmentId: string) => Promise<void>;
+  updateAppointmentStatus: (appointmentId: string, status: AppointmentStatus) => Promise<void>;
 
   // Admin actions
   getTodayAppointments: (date: string) => Appointment[];
 }
 
 export const useAppointmentStore = create<AppointmentState>((set, get) => ({
-  appointments: [...mockAppointments],
+  appointments: [],
   isLoading: false,
+
+  fetchAppointments: async () => {
+    set({ isLoading: true });
+    const appointments = await AppointmentService.getAll();
+    set({ appointments, isLoading: false });
+  },
 
   getMyAppointments: (userId) => {
     return get().appointments.filter((a) => a.userId === userId);
@@ -68,8 +73,8 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     return false;
   },
 
-  cancelAppointment: (appointmentId) => {
-    get().updateAppointmentStatus(appointmentId, AppointmentStatus.CANCELLED);
+  cancelAppointment: async (appointmentId) => {
+    await get().updateAppointmentStatus(appointmentId, AppointmentStatus.CANCELLED);
   },
 
   getTodayAppointments: (date) => {
@@ -78,13 +83,16 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       .sort((a, b) => a.time.localeCompare(b.time));
   },
 
-  updateAppointmentStatus: (appointmentId, status) => {
-    set((state) => ({
-      appointments: state.appointments.map((a) =>
-        a.id === appointmentId
-          ? { ...a, status, updatedAt: new Date().toISOString() }
-          : a
-      ),
-    }));
+  updateAppointmentStatus: async (appointmentId, status) => {
+    const success = await AppointmentService.updateStatus(appointmentId, status);
+    if (success) {
+      set((state) => ({
+        appointments: state.appointments.map((a) =>
+          a.id === appointmentId
+            ? { ...a, status, updatedAt: new Date().toISOString() }
+            : a
+        ),
+      }));
+    }
   },
 }));

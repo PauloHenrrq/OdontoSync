@@ -40,7 +40,7 @@ export default function AdminDashboard() {
         <View style={s.kpiRow}>
           <KPICard value={kpis.confirmedToday} label="Confirmados" icon={<CalendarCheck size={20} color={colors.primary} />} />
           <KPICard value={kpis.pendingContact} label="Pendentes" icon={<Clock size={20} color="#E65100" />} color="#E65100" />
-          <KPICard value={`${kpis.noShowRate}%`} label="No-Show" icon={<TrendingDown size={20} color={colors.error} />} color={colors.error} />
+          <KPICard value={`${kpis.absenceRate}%`} label="Taxa de Faltas" icon={<TrendingDown size={20} color={colors.error} />} color={colors.error} />
         </View>
 
         <View style={s.section}>

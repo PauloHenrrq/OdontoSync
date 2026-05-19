@@ -36,10 +36,10 @@ const statusConfig: Record<AppointmentStatus, { bg: string; text: string; label:
     text: colors.error,
     label: 'Cancelado',
   },
-  [AppointmentStatus.NO_SHOW]: {
+  [AppointmentStatus.ABSENT]: {
     bg: '#FCE4EC',
     text: '#C62828',
-    label: 'No-Show',
+    label: 'Faltou',
   },
 };
 
