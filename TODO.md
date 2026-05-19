@@ -16,10 +16,10 @@
 - [x] Desacoplamento arquitetural (SOLID) das Zustand Stores para Services dedicados.
 
 ## Fase 3: Integração Backend & Banco de Dados (Atual)
-- [ ] Configuração do arquivo `.env` no `/backend` com string de conexão Neon DB.
-- [ ] Execução das migrações do Prisma ORM (`npx prisma db push` / `migrate dev`).
-- [ ] Integração da camada Service do frontend (`AuthService`, `AppointmentService`) substituindo os mocks por chamadas de API reais.
-- [ ] Testes ponta a ponta e validação do fluxo do "Elo Central" (telefone como identificador universal).
+- [x] Configuração do arquivo `.env` no `/backend` com string de conexão Neon DB.
+- [x] Execução das migrações do Prisma ORM (`npx prisma db push` / `migrate dev`).
+- [x] Integração da camada Service do frontend (`AuthService`, `AppointmentService`) substituindo os mocks por chamadas de API reais.
+- [x] Testes ponta a ponta e validação do fluxo do "Elo Central" (telefone como identificador universal).
 
 ## Fase 4: Recursos Avançados (Futuro V2/V3)
 - [ ] Prontuário Digital.

@@ -141,4 +141,9 @@ O projeto utiliza o **Expo Router** (roteamento baseado em arquivos), onde a est
   - What: Implementada camada de Services para desacoplamento de estado e criada API REST protegida por JWT/RBAC com Fastify/Prisma.
   - Workflows: `/refactor`, `/build`
   - Next: Integrar frontend com backend real rodando no banco Neon DB.
+- [2026-05-18] feat: Integração ponta a ponta Fastify + Neon DB e compatibilidade web
+  - What: Substituição de mocks por chamadas reais, criação do interceptador de token JWT, utilitário Alert cross-platform e semeadura completa do banco de dados Neon.
+  - Decisions: Implementação de um módulo de Alert polimórfico para evitar travamentos de modais no Expo Web e sincronização do status de falta para ABSENT.
+  - Workflows: `/commit`, `/log`
+  - Next: Iniciar testes funcionais e de usabilidade no simulador para refinar o design e interações do aplicativo.
 <!-- LOG_END -->
