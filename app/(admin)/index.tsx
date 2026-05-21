@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { CalendarCheck, Clock, AlertTriangle, TrendingDown, Plus } from 'lucide-react-native';
+import { CalendarCheck, Clock, AlertTriangle, TrendingDown, Plus, Phone } from 'lucide-react-native';
 import { KPICard } from '@/src/components/ui/KPICard';
 import { Card } from '@/src/components/ui/Card';
 import { Avatar } from '@/src/components/ui/Avatar';
@@ -32,7 +32,7 @@ export default function AdminDashboard() {
         <View style={s.header}>
           <View>
             <Text style={s.greeting}>Bom dia, {firstName}!</Text>
-            <Text style={s.sub}>Painel de Hoje</Text>
+            <Text style={s.sub}>Visão Geral</Text>
           </View>
           <Avatar name={user?.name ?? 'Admin'} size={44} showBorder />
         </View>
@@ -84,7 +84,7 @@ export default function AdminDashboard() {
               <Text style={s.actionTxt}>Novo Agendamento</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[s.actionBtn, { backgroundColor: colors.secondaryContainer }]}>
-              <AlertTriangle size={20} color={colors.onSecondaryContainer} />
+              <Phone size={20} color={colors.onSecondaryContainer} />
               <Text style={[s.actionTxt, { color: colors.onSecondaryContainer }]}>Contato WhatsApp</Text>
             </TouchableOpacity>
           </View>
@@ -114,7 +114,7 @@ const s = StyleSheet.create({
   aptPatient: { fontFamily: fonts.body, fontSize: fontSizes.bodyMd, fontWeight: '600', color: colors.onSurface },
   aptService: { fontFamily: fonts.body, fontSize: fontSizes.bodySm, color: colors.onSurfaceVariant, marginTop: 2 },
   aptDentist: { fontFamily: fonts.label, fontSize: fontSizes.labelSm, color: colors.outline, marginTop: 2 },
-  actionsRow: { flexDirection: 'row', gap: 10 },
+  actionsRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
   actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 14 },
   actionTxt: { fontFamily: fonts.label, fontSize: fontSizes.labelLg, color: colors.onPrimary, fontWeight: '600' },
 });
