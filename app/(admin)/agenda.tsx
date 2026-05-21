@@ -122,7 +122,7 @@ export default function AgendaScreen() {
     <SafeAreaView style={s.container}>
       <Text style={s.title}>Agenda da Clínica</Text>
 
-      {/* Cabeçalho da Data Formatada com "Ver Calendário" posicionado na direita em baixo */}
+      {/* Cabeçalho da Data Formatada */}
       <View style={s.dateHeader}>
         <View style={s.dateHeaderTitleCol}>
           <Text style={s.dateHeaderLabel}>Data Selecionada</Text>
@@ -133,14 +133,10 @@ export default function AgendaScreen() {
             })}
           </Text>
         </View>
-        <TouchableOpacity style={s.calendarBtn} onPress={() => setIsModalVisible(true)} activeOpacity={0.7}>
-          <Calendar size={16} color={colors.primary} />
-          <Text style={s.calendarBtnTxt}>Ver Calendário</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Seletor Horizontal de 5 dias em torno da data central */}
-      <View style={{ marginBottom: spacing.md }}>
+      <View style={{ marginBottom: spacing.xs }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.dateRow}>
           {dates.map((d) => {
             const dt = new Date(d + 'T12:00:00');
@@ -153,6 +149,14 @@ export default function AgendaScreen() {
             );
           })}
         </ScrollView>
+      </View>
+
+      {/* Ver Calendário posicionado na direita em baixo das datas atuais */}
+      <View style={s.calendarBtnRow}>
+        <TouchableOpacity style={s.calendarBtn} onPress={() => setIsModalVisible(true)} activeOpacity={0.7}>
+          <Calendar size={16} color={colors.primary} />
+          <Text style={s.calendarBtnTxt}>Ver Calendário</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.scroll}>
@@ -289,15 +293,17 @@ export default function AgendaScreen() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  title: { fontFamily: fonts.headline, fontSize: fontSizes.headlineMd, fontWeight: '700', color: colors.onSurface, paddingHorizontal: spacing.lg, paddingTop: spacing.md, marginBottom: 8 },
+  title: { fontFamily: fonts.headline, fontSize: fontSizes.headlineMd, fontWeight: '700', color: colors.onSurface, paddingHorizontal: spacing.lg, paddingTop: spacing.md, marginBottom: 24 },
   
-  // Estilos do cabeçalho de data alinhado embaixo à direita
-  dateHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingHorizontal: spacing.lg, marginBottom: 12 },
+  // Estilos do cabeçalho de data
+  dateHeader: { paddingHorizontal: spacing.lg, marginBottom: 12 },
   dateHeaderTitleCol: { flex: 1 },
   dateHeaderLabel: { fontFamily: fonts.label, fontSize: fontSizes.labelSm, color: colors.outline, textTransform: 'uppercase', letterSpacing: 0.5 },
   dateHeaderVal: { fontFamily: fonts.headline, fontSize: fontSizes.titleMd, fontWeight: '700', color: colors.primary, textTransform: 'capitalize', marginTop: 10 },
-  calendarBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, backgroundColor: colors.primaryFixed + '40' },
-  calendarBtnTxt: { fontFamily: fonts.label, fontSize: fontSizes.labelSm, color: colors.primary, fontWeight: '600' },
+  
+  calendarBtnRow: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: spacing.lg, marginBottom: spacing.md },
+  calendarBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 12, backgroundColor: colors.primaryFixed + '40' },
+  calendarBtnTxt: { fontFamily: fonts.label, fontSize: 14, color: colors.primary, fontWeight: '600' },
 
   dateRow: { paddingHorizontal: spacing.lg, gap: 10 },
   dateChip: { alignItems: 'center', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 16, backgroundColor: colors.surfaceContainerLow },
