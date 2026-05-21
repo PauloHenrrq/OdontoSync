@@ -136,7 +136,7 @@ export default function LoginScreen() {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Cultivando o Bem-Estar desde 2024</Text>
+          <Text style={styles.footerText}>Cultivando o Bem-Estar</Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
