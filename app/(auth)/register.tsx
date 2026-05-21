@@ -182,7 +182,7 @@ export default function RegisterScreen() {
           >
             <Text style={styles.loginText}>
               Já tem conta?{' '}
-              <Text style={styles.loginTextBold}>Sign In</Text>
+              <Text style={styles.loginTextBold}>Entrar</Text>
             </Text>
           </TouchableOpacity>
         </View>
