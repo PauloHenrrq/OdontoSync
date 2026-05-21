@@ -73,7 +73,7 @@ export default function RegisterScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Criar Conta</Text>
           <Text style={styles.subtitle}>
-            Seu sorriso merece o melhor cuidado.
+            A excelência em seu sorriso.
           </Text>
         </View>
 

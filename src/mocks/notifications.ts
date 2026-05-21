@@ -26,7 +26,7 @@ export const mockNotifications: Notification[] = [
     phone: '(11) 98765-4321',
     channel: NotificationChannel.PUSH,
     title: 'Lembrete de Consulta',
-    message: 'Não esqueça! Amanhã às 10:00 você tem consulta no OdontoSync.',
+    message: 'Não esqueça! Amanhã às 10:00 você tem consulta na Odonto Excell.',
     read: false,
     sentAt: '2024-10-14T18:00:00Z',
     status: NotificationStatus.SENT,

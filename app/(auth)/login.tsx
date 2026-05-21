@@ -60,8 +60,8 @@ export default function LoginScreen() {
               <Text style={styles.logoEmoji}>🦷</Text>
             </View>
           </View>
-          <Text style={styles.appName}>OdontoSync</Text>
-          <Text style={styles.tagline}>Bem-vindo de volta ao seu santuário.</Text>
+          <Text style={styles.appName}>Odonto Excell</Text>
+          <Text style={styles.tagline}>Bem-vindo de volta</Text>
         </View>
 
         {/* Form */}
