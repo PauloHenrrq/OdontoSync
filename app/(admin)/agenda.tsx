@@ -3,7 +3,7 @@
 // Painel de agendamentos diários com picker dinâmico e modal calendário.
 // ============================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, ChevronRight, Check, X, AlertTriangle, Calendar } from 'lucide-react-native';
@@ -59,21 +59,34 @@ const getMonthDaysGrid = (monthDate: Date): (Date | null)[] => {
   return grid;
 };
 
+// Cores institucionais para acompanhar os status nos cartões
+const statusColors: Record<AppointmentStatus, string> = {
+  [AppointmentStatus.PENDING]: '#E65100', // Laranja médico
+  [AppointmentStatus.CONFIRMED]: colors.primary, // Verde teal principal
+  [AppointmentStatus.COMPLETED]: '#2E7D32', // Verde conclusão
+  [AppointmentStatus.CANCELLED]: colors.error, // Vermelho erro
+  [AppointmentStatus.ABSENT]: '#C62828', // Vermelho escuro (Falta)
+};
+
 export default function AgendaScreen() {
   const { appointments, cancelAppointment, updateAppointmentStatus } = useAppointmentStore();
   const { getPatientByPhone } = useClinicStore();
 
-  // Estados de data: a data ativa de visualização e a data central para a barra horizontal de 5 dias
-  const [selectedDate, setSelectedDate] = useState(() => {
-    // Inicia na data do mock mais populado para demonstração (15/10/2024), 
-    // mas se o usuário quiser, pode selecionar qualquer data atual no calendário.
-    return '2024-10-15';
-  });
-  const [centerDate, setCenterDate] = useState('2024-10-15');
+  // Estados de data iniciados sempre na data real de hoje
+  const [selectedDate, setSelectedDate] = useState(getTodayStr);
+  const [centerDate, setCenterDate] = useState(getTodayStr);
 
   // Estados de controle do Modal de Calendário
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [currentMonthRef, setCurrentMonthRef] = useState(() => new Date('2024-10-15T12:00:00'));
+  const [currentMonthRef, setCurrentMonthRef] = useState(() => new Date());
+
+  // Garante que, ao abrir a tela (mount), as datas são resetadas para o dia atual de hoje
+  useEffect(() => {
+    const today = getTodayStr();
+    setSelectedDate(today);
+    setCenterDate(today);
+    setCurrentMonthRef(new Date());
+  }, []);
 
   const dates = get5Days(centerDate);
   const dayApts = appointments.filter((a) => a.date === selectedDate).sort((a, b) => a.time.localeCompare(b.time));
@@ -109,13 +122,12 @@ export default function AgendaScreen() {
     <SafeAreaView style={s.container}>
       <Text style={s.title}>Agenda da Clínica</Text>
 
-      {/* Cabeçalho da Data Atualizada */}
+      {/* Cabeçalho da Data Formatada com "Ver Calendário" posicionado na direita em baixo */}
       <View style={s.dateHeader}>
         <View style={s.dateHeaderTitleCol}>
           <Text style={s.dateHeaderLabel}>Data Selecionada</Text>
           <Text style={s.dateHeaderVal}>
             {new Date(selectedDate + 'T12:00:00').toLocaleDateString('pt-BR', {
-              weekday: 'long',
               day: 'numeric',
               month: 'long',
             })}
@@ -148,7 +160,11 @@ export default function AgendaScreen() {
           const svc = mockServices.find((sv) => sv.id === apt.serviceId);
           const patient = apt.userId ? getPatientByPhone(apt.phone) : undefined;
           return (
-            <Card key={apt.id} style={s.aptCard} padding="md">
+            <Card 
+              key={apt.id} 
+              style={[s.aptCard, { borderLeftWidth: 4, borderLeftColor: statusColors[apt.status] }]} 
+              padding="md"
+            >
               <View style={s.aptHeader}>
                 <Text style={s.aptTime}>{apt.time}</Text>
                 <Badge variant="status" status={apt.status} />
@@ -275,11 +291,11 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   title: { fontFamily: fonts.headline, fontSize: fontSizes.headlineMd, fontWeight: '700', color: colors.onSurface, paddingHorizontal: spacing.lg, paddingTop: spacing.md, marginBottom: 8 },
   
-  // Estilos do cabeçalho de data
-  dateHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.lg, marginBottom: 12 },
+  // Estilos do cabeçalho de data alinhado embaixo à direita
+  dateHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingHorizontal: spacing.lg, marginBottom: 12 },
   dateHeaderTitleCol: { flex: 1 },
   dateHeaderLabel: { fontFamily: fonts.label, fontSize: fontSizes.labelSm, color: colors.outline, textTransform: 'uppercase', letterSpacing: 0.5 },
-  dateHeaderVal: { fontFamily: fonts.headline, fontSize: fontSizes.titleMd, fontWeight: '700', color: colors.primary, textTransform: 'capitalize', marginTop: 2 },
+  dateHeaderVal: { fontFamily: fonts.headline, fontSize: fontSizes.titleMd, fontWeight: '700', color: colors.primary, textTransform: 'capitalize', marginTop: 10 },
   calendarBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, backgroundColor: colors.primaryFixed + '40' },
   calendarBtnTxt: { fontFamily: fonts.label, fontSize: fontSizes.labelSm, color: colors.primary, fontWeight: '600' },
 
@@ -299,10 +315,12 @@ const s = StyleSheet.create({
   aptSvc: { fontFamily: fonts.body, fontSize: fontSizes.bodySm, color: colors.onSurfaceVariant, marginTop: 2 },
   aptNotes: { fontFamily: fonts.body, fontSize: fontSizes.bodySm, color: colors.tertiary, marginTop: 6, fontStyle: 'italic' },
   orphan: { fontFamily: fonts.label, fontSize: fontSizes.labelSm, color: '#E65100', marginTop: 6, fontWeight: '500' },
-  actions: { flexDirection: 'row', gap: 8, marginTop: 12 },
-  actConfirm: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: colors.primary, borderRadius: 12, paddingVertical: 10 },
-  actCancel: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: colors.errorContainer, borderRadius: 12, paddingVertical: 10 },
-  actWarn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: '#FFF3E0', borderRadius: 12, paddingVertical: 10 },
+  
+  // Botões centralizados nos cartões da agenda atual
+  actions: { flexDirection: 'row', gap: 8, marginTop: 12, justifyContent: 'center' },
+  actConfirm: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: colors.primary, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20 },
+  actCancel: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: colors.errorContainer, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20 },
+  actWarn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: '#FFF3E0', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20 },
   actTxtW: { fontFamily: fonts.label, fontSize: fontSizes.labelMd, color: colors.onPrimary, fontWeight: '600' },
   actTxtR: { fontFamily: fonts.label, fontSize: fontSizes.labelMd, color: colors.error, fontWeight: '600' },
   actTxtO: { fontFamily: fonts.label, fontSize: fontSizes.labelMd, color: '#E65100', fontWeight: '600' },
