@@ -80,7 +80,7 @@ export default function AgendaScreen() {
                     <Check size={16} color={colors.onPrimary} /><Text style={s.actTxtW}>Concluir</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={s.actWarn} onPress={() => handleAction(apt.id, 'marcar falta')}>
-                    <AlertTriangle size={16} color="#E65100" /><Text style={s.actTxtO}>No-Show</Text>
+                    <AlertTriangle size={16} color="#E65100" /><Text style={s.actTxtO}>Falta</Text>
                   </TouchableOpacity>
                 </View>
               )}

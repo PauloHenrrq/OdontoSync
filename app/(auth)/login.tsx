@@ -61,7 +61,7 @@ export default function LoginScreen() {
             </View>
           </View>
           <Text style={styles.appName}>OdontoSync</Text>
-          <Text style={styles.tagline}>Welcome back to your sanctuary.</Text>
+          <Text style={styles.tagline}>Bem-vindo de volta ao seu santuário.</Text>
         </View>
 
         {/* Form */}
@@ -110,13 +110,13 @@ export default function LoginScreen() {
             onPress={() => router.push('/(auth)/forgot-password')}
             style={styles.forgotLink}
           >
-            <Text style={styles.forgotText}>Forgot?</Text>
+            <Text style={styles.forgotText}>Esqueceu a senha?</Text>
           </TouchableOpacity>
 
           {error && <Text style={styles.errorMessage}>{error}</Text>}
 
           <Button
-            title="Sign In"
+            title="Entrar"
             onPress={handleSubmit(onSubmit)}
             loading={isLoading}
             fullWidth
@@ -129,14 +129,14 @@ export default function LoginScreen() {
           >
             <Text style={styles.registerText}>
               Não tem uma conta?{' '}
-              <Text style={styles.registerTextBold}>Register</Text>
+              <Text style={styles.registerTextBold}>Cadastre-se</Text>
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Curating Wellness Since 2024</Text>
+          <Text style={styles.footerText}>Cultivando o Bem-Estar desde 2024</Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
