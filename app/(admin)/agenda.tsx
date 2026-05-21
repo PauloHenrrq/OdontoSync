@@ -1,8 +1,12 @@
-// OdontoSync — Admin: Agenda (Stitch: 72b64cd6)
+// ============================================================
+// OdontoSync — Admin: Agenda
+// Painel de agendamentos diários com picker dinâmico e modal calendário.
+// ============================================================
+
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, ChevronRight, Check, X, AlertTriangle } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Check, X, AlertTriangle, Calendar } from 'lucide-react-native';
 import { Card } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { Alert } from '@/src/components/ui/Alert';
@@ -12,12 +16,66 @@ import { AppointmentStatus } from '@/src/types';
 import { colors, fonts, fontSizes, spacing } from '@/src/styles/tokens';
 import { mockServices } from '@/src/mocks/services';
 
+/** Formata data para YYYY-MM-DD */
+const formatDateStr = (date: Date): string => {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const getTodayStr = (): string => formatDateStr(new Date());
+
+/** Retorna 5 dias em torno de uma data de referência */
+const get5Days = (refDateStr: string): string[] => {
+  const days = [];
+  for (let i = -2; i <= 2; i++) {
+    const d = new Date(refDateStr + 'T12:00:00');
+    d.setDate(d.getDate() + i);
+    days.push(formatDateStr(d));
+  }
+  return days;
+};
+
+/** Retorna quantidade de dias num mês */
+const getDaysInMonth = (year: number, month: number): number => {
+  return new Date(year, month + 1, 0).getDate();
+};
+
+/** Monta a grade de dias de um determinado mês */
+const getMonthDaysGrid = (monthDate: Date): (Date | null)[] => {
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
+  const totalDays = getDaysInMonth(year, month);
+  const firstDayIndex = new Date(year, month, 1).getDay(); // 0 = Dom, 1 = Seg, ...
+
+  const grid: (Date | null)[] = [];
+  for (let i = 0; i < firstDayIndex; i++) {
+    grid.push(null);
+  }
+  for (let i = 1; i <= totalDays; i++) {
+    grid.push(new Date(year, month, i));
+  }
+  return grid;
+};
+
 export default function AgendaScreen() {
   const { appointments, cancelAppointment, updateAppointmentStatus } = useAppointmentStore();
   const { getPatientByPhone } = useClinicStore();
-  const [selectedDate, setSelectedDate] = useState('2024-10-15');
 
-  const dates = ['2024-10-14', '2024-10-15', '2024-10-16', '2024-10-17', '2024-10-18'];
+  // Estados de data: a data ativa de visualização e a data central para a barra horizontal de 5 dias
+  const [selectedDate, setSelectedDate] = useState(() => {
+    // Inicia na data do mock mais populado para demonstração (15/10/2024), 
+    // mas se o usuário quiser, pode selecionar qualquer data atual no calendário.
+    return '2024-10-15';
+  });
+  const [centerDate, setCenterDate] = useState('2024-10-15');
+
+  // Estados de controle do Modal de Calendário
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [currentMonthRef, setCurrentMonthRef] = useState(() => new Date('2024-10-15T12:00:00'));
+
+  const dates = get5Days(centerDate);
   const dayApts = appointments.filter((a) => a.date === selectedDate).sort((a, b) => a.time.localeCompare(b.time));
 
   const handleAction = (id: string, action: string) => {
@@ -32,22 +90,58 @@ export default function AgendaScreen() {
     ]);
   };
 
+  const handlePrevMonth = () => {
+    const prev = new Date(currentMonthRef);
+    prev.setMonth(prev.getMonth() - 1);
+    setCurrentMonthRef(prev);
+  };
+
+  const handleNextMonth = () => {
+    const next = new Date(currentMonthRef);
+    next.setMonth(next.getMonth() + 1);
+    setCurrentMonthRef(next);
+  };
+
+  const monthDays = getMonthDaysGrid(currentMonthRef);
+  const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
   return (
     <SafeAreaView style={s.container}>
       <Text style={s.title}>Agenda da Clínica</Text>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.dateRow}>
-        {dates.map((d) => {
-          const dt = new Date(d + 'T12:00:00');
-          const isActive = d === selectedDate;
-          return (
-            <TouchableOpacity key={d} style={[s.dateChip, isActive && s.dateChipActive]} onPress={() => setSelectedDate(d)}>
-              <Text style={[s.dateDay, isActive && s.dateDayActive]}>{dt.toLocaleDateString('pt-BR', { weekday: 'short' })}</Text>
-              <Text style={[s.dateNum, isActive && s.dateNumActive]}>{dt.getDate()}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+      {/* Cabeçalho da Data Atualizada */}
+      <View style={s.dateHeader}>
+        <View style={s.dateHeaderTitleCol}>
+          <Text style={s.dateHeaderLabel}>Data Selecionada</Text>
+          <Text style={s.dateHeaderVal}>
+            {new Date(selectedDate + 'T12:00:00').toLocaleDateString('pt-BR', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+            })}
+          </Text>
+        </View>
+        <TouchableOpacity style={s.calendarBtn} onPress={() => setIsModalVisible(true)} activeOpacity={0.7}>
+          <Calendar size={16} color={colors.primary} />
+          <Text style={s.calendarBtnTxt}>Ver Calendário</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Seletor Horizontal de 5 dias em torno da data central */}
+      <View style={{ marginBottom: spacing.md }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.dateRow}>
+          {dates.map((d) => {
+            const dt = new Date(d + 'T12:00:00');
+            const isActive = d === selectedDate;
+            return (
+              <TouchableOpacity key={d} style={[s.dateChip, isActive && s.dateChipActive]} onPress={() => setSelectedDate(d)}>
+                <Text style={[s.dateDay, isActive && s.dateDayActive]}>{dt.toLocaleDateString('pt-BR', { weekday: 'short' })}</Text>
+                <Text style={[s.dateNum, isActive && s.dateNumActive]}>{dt.getDate()}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.scroll}>
         {dayApts.length > 0 ? dayApts.map((apt) => {
@@ -92,20 +186,111 @@ export default function AgendaScreen() {
           </Card>
         )}
       </ScrollView>
+
+      {/* Modal de Calendário Completo */}
+      <Modal
+        visible={isModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <View style={s.modalOverlay}>
+          <View style={s.modalContent}>
+            {/* Cabeçalho do Modal */}
+            <View style={s.modalHeader}>
+              <TouchableOpacity onPress={handlePrevMonth} style={s.monthNavBtn} activeOpacity={0.7}>
+                <ChevronLeft size={20} color={colors.primary} />
+              </TouchableOpacity>
+              <Text style={s.modalTitle}>
+                {currentMonthRef.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+              </Text>
+              <TouchableOpacity onPress={handleNextMonth} style={s.monthNavBtn} activeOpacity={0.7}>
+                <ChevronRight size={20} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Dias da semana */}
+            <View style={s.weekdayRow}>
+              {weekdays.map((w, idx) => (
+                <Text key={idx} style={s.weekdayTxt}>{w}</Text>
+              ))}
+            </View>
+
+            {/* Grade de dias */}
+            <View style={s.daysGrid}>
+              {monthDays.map((day, idx) => {
+                if (!day) {
+                  return <View key={`empty-${idx}`} style={s.dayCellEmpty} />;
+                }
+
+                const dayStr = formatDateStr(day);
+                const isSelected = dayStr === selectedDate;
+                const isToday = dayStr === getTodayStr();
+
+                return (
+                  <TouchableOpacity
+                    key={dayStr}
+                    style={[
+                      s.dayCell,
+                      isSelected && s.dayCellSelected,
+                      isToday && !isSelected && s.dayCellToday,
+                    ]}
+                    onPress={() => {
+                      setSelectedDate(dayStr);
+                      setCenterDate(dayStr);
+                      setIsModalVisible(false);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        s.dayCellTxt,
+                        isSelected && s.dayCellTxtSelected,
+                        isToday && !isSelected && s.dayCellTxtToday,
+                      ]}
+                    >
+                      {day.getDate()}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Botão de Fechar */}
+            <TouchableOpacity
+              style={s.modalCloseBtn}
+              onPress={() => setIsModalVisible(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={s.modalCloseBtnTxt}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  title: { fontFamily: fonts.headline, fontSize: fontSizes.headlineMd, fontWeight: '700', color: colors.onSurface, paddingHorizontal: spacing.lg, paddingTop: spacing.md, marginBottom: spacing.md },
-  dateRow: { paddingHorizontal: spacing.lg, gap: 10, marginBottom: spacing.lg },
+  title: { fontFamily: fonts.headline, fontSize: fontSizes.headlineMd, fontWeight: '700', color: colors.onSurface, paddingHorizontal: spacing.lg, paddingTop: spacing.md, marginBottom: 8 },
+  
+  // Estilos do cabeçalho de data
+  dateHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.lg, marginBottom: 12 },
+  dateHeaderTitleCol: { flex: 1 },
+  dateHeaderLabel: { fontFamily: fonts.label, fontSize: fontSizes.labelSm, color: colors.outline, textTransform: 'uppercase', letterSpacing: 0.5 },
+  dateHeaderVal: { fontFamily: fonts.headline, fontSize: fontSizes.titleMd, fontWeight: '700', color: colors.primary, textTransform: 'capitalize', marginTop: 2 },
+  calendarBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, backgroundColor: colors.primaryFixed + '40' },
+  calendarBtnTxt: { fontFamily: fonts.label, fontSize: fontSizes.labelSm, color: colors.primary, fontWeight: '600' },
+
+  dateRow: { paddingHorizontal: spacing.lg, gap: 10 },
   dateChip: { alignItems: 'center', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 16, backgroundColor: colors.surfaceContainerLow },
   dateChipActive: { backgroundColor: colors.primary },
   dateDay: { fontFamily: fonts.label, fontSize: fontSizes.labelSm, color: colors.outline, marginBottom: 4 },
   dateDayActive: { color: colors.onPrimary },
   dateNum: { fontFamily: fonts.headline, fontSize: fontSizes.titleLg, fontWeight: '700', color: colors.onSurface },
   dateNumActive: { color: colors.onPrimary },
+  
   scroll: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, gap: 12 },
   aptCard: { marginBottom: 0 },
   aptHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
@@ -121,4 +306,23 @@ const s = StyleSheet.create({
   actTxtW: { fontFamily: fonts.label, fontSize: fontSizes.labelMd, color: colors.onPrimary, fontWeight: '600' },
   actTxtR: { fontFamily: fonts.label, fontSize: fontSizes.labelMd, color: colors.error, fontWeight: '600' },
   actTxtO: { fontFamily: fonts.label, fontSize: fontSizes.labelMd, color: '#E65100', fontWeight: '600' },
+
+  // Estilos do Modal de Calendário
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.45)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalContent: { width: '100%', maxWidth: 340, backgroundColor: colors.surfaceContainerLowest, borderRadius: 24, padding: 20 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  monthNavBtn: { padding: 6, borderRadius: 12, backgroundColor: colors.surfaceContainer },
+  modalTitle: { fontFamily: fonts.headline, fontSize: fontSizes.titleMd, fontWeight: '700', color: colors.onSurface, textTransform: 'capitalize' },
+  weekdayRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  weekdayTxt: { flex: 1, textAlign: 'center', fontFamily: fonts.label, fontSize: 11, color: colors.outline, fontWeight: '600' },
+  daysGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 6 },
+  dayCell: { width: `${100 / 7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 20 },
+  dayCellSelected: { backgroundColor: colors.primary },
+  dayCellToday: { borderWidth: 1.5, borderColor: colors.primaryFixedDim },
+  dayCellEmpty: { width: `${100 / 7}%`, aspectRatio: 1 },
+  dayCellTxt: { fontFamily: fonts.bodyMedium, fontSize: 13, color: colors.onSurface },
+  dayCellTxtSelected: { color: colors.onPrimary, fontWeight: '700' },
+  dayCellTxtToday: { color: colors.primary, fontWeight: '700' },
+  modalCloseBtn: { marginTop: 16, paddingVertical: 12, borderRadius: 16, backgroundColor: colors.surfaceContainerLow, alignItems: 'center' },
+  modalCloseBtnTxt: { fontFamily: fonts.label, fontSize: fontSizes.labelLg, color: colors.outline, fontWeight: '600' },
 });
