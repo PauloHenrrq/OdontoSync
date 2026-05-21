@@ -91,7 +91,7 @@ export default function ProfileScreen() {
           <Text style={s.logoutTxt}>Sair da Conta</Text>
         </TouchableOpacity>
 
-        <Text style={s.version}>OdontoSync v1.0.0</Text>
+        <Text style={s.version}>Odonto Excell v1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );

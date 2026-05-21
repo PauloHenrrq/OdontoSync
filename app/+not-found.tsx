@@ -9,7 +9,7 @@ export default function NotFoundScreen() {
       <View style={styles.container}>
         <Text style={styles.emoji}>🦷</Text>
         <Text style={styles.title}>Página não encontrada</Text>
-        <Text style={styles.subtitle}>Essa rota não existe no OdontoSync.</Text>
+        <Text style={styles.subtitle}>Essa rota não existe na Odonto Excell.</Text>
         <Link href="/" style={styles.link}>
           <Text style={styles.linkText}>Voltar ao início</Text>
         </Link>

@@ -6,14 +6,14 @@ import { ClinicConfig, DashboardKPIs, TeamMember } from '@/src/types';
 
 export const mockClinicConfig: ClinicConfig = {
   id: 'clinic_001',
-  name: 'OdontoSync Clínica',
+  name: 'Odonto Excell',
   address: 'Av. Paulista, 1000 - São Paulo, SP',
   phone: '(11) 3333-4444',
   logoUrl: undefined,
   absenceReduction: true,
   reminderHoursBefore: 24,
   confirmationTemplate:
-    'Olá {nome}! Sua consulta no OdontoSync está confirmada para {data} às {hora}. Caso precise reagendar, acesse o app ou ligue para {telefone}.',
+    'Olá {nome}! Sua consulta na Odonto Excell está confirmada para {data} às {hora}. Caso precise reagendar, acesse o app ou ligue para {telefone}.',
   cancellationTemplate:
     'Olá {nome}, notamos que sua consulta de {data} foi cancelada. Gostaríamos de reagendar. Acesse o app ou fale conosco.',
 };
