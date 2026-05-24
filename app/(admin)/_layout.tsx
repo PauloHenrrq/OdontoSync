@@ -24,7 +24,7 @@ export default function AdminLayout() {
       <Tabs.Screen name="index" options={{ title: 'Início', tabBarIcon: ({ color, size }) => <LayoutDashboard size={size} color={color} /> }} />
       <Tabs.Screen name="agenda" options={{ title: 'Agenda', tabBarIcon: ({ color, size }) => <CalendarCheck size={size} color={color} /> }} />
       <Tabs.Screen name="patients" options={{ title: 'Pacientes', tabBarIcon: ({ color, size }) => <Users size={size} color={color} /> }} />
-      <Tabs.Screen name="settings" options={{ title: 'Config', tabBarIcon: ({ color, size }) => <Settings size={size} color={color} /> }} />
+      <Tabs.Screen name="settings" options={{ title: 'Perfil', tabBarIcon: ({ color, size }) => <Settings size={size} color={color} /> }} />
     </Tabs>
   );
 }

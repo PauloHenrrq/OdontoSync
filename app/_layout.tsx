@@ -12,6 +12,7 @@ import { useFonts as useManrope, Manrope_400Regular, Manrope_500Medium, Manrope_
 import { useFonts as useInter, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 import { useAuthStore } from '@/src/stores/authStore';
 import { useAppointmentStore } from '@/src/stores/appointmentStore';
+import { useClinicStore } from '@/src/stores/clinicStore';
 import { UserRole } from '@/src/types';
 
 import 'react-native-reanimated';
@@ -23,6 +24,7 @@ SplashScreen.preventAutoHideAsync();
 function useProtectedRoute() {
   const { isAuthenticated, user } = useAuthStore();
   const { fetchAppointments } = useAppointmentStore();
+  const { fetchConfig, fetchPatients, fetchServices } = useClinicStore();
   const segments = useSegments();
   const router = useRouter();
 
@@ -37,6 +39,9 @@ function useProtectedRoute() {
     } else if (isAuthenticated) {
       // Autenticado, carrega dados e navega
       fetchAppointments();
+      fetchConfig();
+      fetchPatients();
+      fetchServices();
       
       if (inAuthGroup) {
         if (user?.role === UserRole.ADMIN) {

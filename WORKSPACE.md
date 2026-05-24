@@ -146,4 +146,9 @@ O projeto utiliza o **Expo Router** (roteamento baseado em arquivos), onde a est
   - Decisions: Implementação de um módulo de Alert polimórfico para evitar travamentos de modais no Expo Web e sincronização do status de falta para ABSENT.
   - Workflows: `/commit`, `/log`
   - Next: Iniciar testes funcionais e de usabilidade no simulador para refinar o design e interações do aplicativo.
+- [2026-05-21] refactor: Substituição definitiva de Mocks pela API e Refinamentos de UI/UX
+  - What: Criação de rotas `/clinic/services` no backend, atualização do script de seed com pacientes do frontend, e substituição dos `mockServices`/`mockUsers` por integração via `ClinicService` no frontend. Substituição dos `Pickers` nativos por Dropdowns dinâmicos.
+  - Decisions: Máscaras de input refatoradas (baseadas em slice) para permitir navegação livre do cursor sem bugs do React Native Web.
+  - Workflows: `/refactor`, `/log`
+  - Next: Melhorar validação no formulário de Agendamento e implementar UI interativa para disparo de mensagens de WhatsApp.
 <!-- LOG_END -->

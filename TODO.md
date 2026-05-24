@@ -18,10 +18,15 @@
 ## Fase 3: Integração Backend & Banco de Dados (Atual)
 - [x] Configuração do arquivo `.env` no `/backend` com string de conexão Neon DB.
 - [x] Execução das migrações do Prisma ORM (`npx prisma db push` / `migrate dev`).
-- [x] Integração da camada Service do frontend (`AuthService`, `AppointmentService`) substituindo os mocks por chamadas de API reais.
+- [x] Integração da camada Service do frontend (`AuthService`, `AppointmentService`, `ClinicService`) substituindo TODOS os mocks por chamadas de API reais.
 - [x] Testes ponta a ponta e validação do fluxo do "Elo Central" (telefone como identificador universal).
+- [x] Sincronização e seed do banco real com pacientes e serviços reais.
 
-## Fase 4: Recursos Avançados (Futuro V2/V3)
+## Fase 4: Polimento UX e Recursos Avançados
+- [x] Componentes Nativos vs Web: Refatoração de Pickers para Dropdowns customizados e animados.
+- [x] Melhoria nas Máscaras de Input (evitar bloqueios de backspace).
+- [ ] Criação/Refinamento do Modal de Templates de Contato WhatsApp para Pacientes.
+- [ ] Refinamento da visualização e obrigatoriedade dos campos de Agendamento.
 - [ ] Prontuário Digital.
 - [ ] Módulo Financeiro e Repasses.
 - [ ] Gestão de Estoque e Clínicas Parceiras.
