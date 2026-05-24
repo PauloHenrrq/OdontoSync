@@ -76,5 +76,14 @@
   - **Correção de "No-Show" (Faltas):** Correção da string de ação no botão de marcar falta na Agenda ([agenda.tsx](file:///c:/Users/paulo/workspace/projetos/OdontoSync/app/(admin)/agenda.tsx)) de `'marcar no-show'` para `'marcar falta'`, harmonizando-o com o validador interno e permitindo a alteração correta do status para `ABSENT`.
 - **Próximo Passo:** Prosseguir com os testes de usabilidade e aplicar melhorias visuais e estilizações conforme as orientações de UX fornecidas pelo usuário.
 
+## 2026-05-21 (Refinamento de UX & Integração Final de API)
 
-
+- **Task:** Melhorias Visuais na Agenda e Substituição Definitiva de Mocks pela API Real.
+- **Status:** Concluído.
+- **Ações:**
+  - **Refinamento de UI/UX:** Substituição dos componentes nativos `<Picker>` (que geravam inconsistências visuais na Web) por Dropdowns customizados e animados na tela de Agenda (`agenda.tsx`).
+  - **Correção de Máscaras:** Refatoração das funções de máscara de input (Telefone, Data, Hora) utilizando `slice` puro em vez de Regex replace, resolvendo o bug de travamento do backspace.
+  - **Integração Real (Backend):** Criação da rota `GET /clinic/services` no Fastify e inclusão dos pacientes de testes frontend (`Ana Paula Santos`, etc.) diretamente no script de seed (`seed.ts`) do banco PostgreSQL.
+  - **Integração Real (Frontend):** Criação de `clinicService.ts` e refatoração da `clinicStore.ts` para buscar Configurações, Pacientes e Serviços diretamente do banco de dados na inicialização do app (`_layout.tsx`), eliminando os dados estáticos (`mockServices`, `mockUsers`).
+  - **Persistência de Agendamentos:** Conexão do botão "Salvar Agendamento" com a action `bookAppointment`, registrando oficialmente os novos agendamentos via POST na API com vinculação real ao ID UUID do Serviço e Paciente.
+- **Próximo Passo:** Avaliar e polir o fluxo e UX dos modais de Contato (WhatsApp) e Perfil de Usuário, além de refinar a responsividade geral e preparar para os testes finais.
