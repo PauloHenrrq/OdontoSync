@@ -17,9 +17,9 @@ interface BadgeProps {
 
 const statusConfig: Record<AppointmentStatus, { bg: string; text: string; label: string }> = {
   [AppointmentStatus.PENDING]: {
-    bg: '#FFF3E0',
-    text: '#E65100',
-    label: 'Pendente',
+    bg: '#E8F5E9',
+    text: '#2E7D32',
+    label: 'Agendado',
   },
   [AppointmentStatus.CONFIRMED]: {
     bg: colors.primaryFixed + '40',

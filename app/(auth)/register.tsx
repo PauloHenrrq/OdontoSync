@@ -23,10 +23,17 @@ import { useAuthStore } from '@/src/stores/authStore';
 import { registerSchema, RegisterFormData } from '@/src/schemas/auth.schema';
 import { colors, fonts, fontSizes, spacing } from '@/src/styles/tokens';
 
+import { Alert as RNAlert } from 'react-native';
+
 export default function RegisterScreen() {
   const router = useRouter();
-  const { register: registerUser, isLoading, error, clearError } = useAuthStore();
+  const { register: registerUser, sendOtp, isLoading, error, clearError } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
+
+  // Estados de verificação OTP
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [tempOtpCode, setTempOtpCode] = useState<string | null>(null);
 
   const {
     control,
@@ -45,7 +52,33 @@ export default function RegisterScreen() {
 
   const onSubmit = async (data: RegisterFormData) => {
     clearError();
-    const success = await registerUser(data.name, data.email, data.phone, data.password);
+
+    // Se o código OTP ainda não foi enviado, solicita primeiro
+    if (!isOtpSent) {
+      const cleanPhone = data.phone.replace(/\D/g, '');
+      const response = await sendOtp(cleanPhone);
+      if (response.success) {
+        setIsOtpSent(true);
+        if (response.devCode) {
+          setTempOtpCode(response.devCode);
+        }
+        RNAlert.alert(
+          'Código Enviado',
+          'Enviamos um código de confirmação de 6 dígitos para o seu WhatsApp cadastrado!'
+        );
+      } else {
+        RNAlert.alert('Erro', response.error || 'Não foi possível enviar o código de verificação.');
+      }
+      return;
+    }
+
+    if (otpCode.length !== 6) {
+      RNAlert.alert('Atenção', 'Por favor, digite o código de 6 dígitos recebido.');
+      return;
+    }
+
+    // Com o código enviado, realiza o registro completo
+    const success = await registerUser(data.name, data.email, data.phone, data.password, otpCode);
     if (success) {
       // O redirecionamento é feito automaticamente pelo useProtectedRoute
     }
@@ -166,10 +199,26 @@ export default function RegisterScreen() {
             )}
           />
 
+          {isOtpSent && (
+            <View style={{ marginBottom: 16 }}>
+              <Input
+                label="Código de Verificação WhatsApp"
+                placeholder="Digite o código de 6 dígitos"
+                value={otpCode}
+                onChangeText={setOtpCode}
+                keyboardType="number-pad"
+                maxLength={6}
+              />
+              <Text style={styles.helperText}>
+                {tempOtpCode ? `Ambiente de Teste: Use o código ${tempOtpCode}` : 'Código enviado via WhatsApp'}
+              </Text>
+            </View>
+          )}
+
           {error && <Text style={styles.errorMessage}>{error}</Text>}
 
           <Button
-            title="Criar Conta"
+            title={isOtpSent ? "Confirmar e Criar Conta" : "Enviar Código WhatsApp"}
             onPress={handleSubmit(onSubmit)}
             loading={isLoading}
             fullWidth
@@ -251,5 +300,13 @@ const styles = StyleSheet.create({
   loginTextBold: {
     color: colors.primary,
     fontWeight: '600',
+  },
+  helperText: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.bodySm,
+    color: colors.primary,
+    marginTop: 4,
+    marginLeft: 4,
+    fontWeight: '500',
   },
 });

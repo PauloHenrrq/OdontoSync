@@ -87,3 +87,55 @@
   - **Integração Real (Frontend):** Criação de `clinicService.ts` e refatoração da `clinicStore.ts` para buscar Configurações, Pacientes e Serviços diretamente do banco de dados na inicialização do app (`_layout.tsx`), eliminando os dados estáticos (`mockServices`, `mockUsers`).
   - **Persistência de Agendamentos:** Conexão do botão "Salvar Agendamento" com a action `bookAppointment`, registrando oficialmente os novos agendamentos via POST na API com vinculação real ao ID UUID do Serviço e Paciente.
 - **Próximo Passo:** Avaliar e polir o fluxo e UX dos modais de Contato (WhatsApp) e Perfil de Usuário, além de refinar a responsividade geral e preparar para os testes finais.
+
+## 2026-05-26
+
+- **Task:** Refinamento do Fluxo e Exibição de Agendamentos (Status Pendente → Agendado).
+- **Status:** Concluído.
+- **Ações:**
+  - **Atualização de Status (Badge.tsx):** Redefinido o comportamento visual de `AppointmentStatus.PENDING` no componente `<Badge />`. O status agora é renderizado na interface como **"Agendado"** em um tom verde claro elegante (`bg: '#E8F5E9'`, `text: '#2E7D32'`), alinhando-se à lógica de que todo agendamento na clínica já entra em estado ativo/confirmado de imediato.
+  - **Harmonização Visual da Agenda (agenda.tsx):** Alterado o mapeamento de cores `statusColors` para associar o status `PENDING` diretamente à cor verde escuro (`#2E7D32`), garantindo que a borda lateral esquerda de destaque dos cartões de consulta reflita a nova identidade verde de confirmação instantânea.
+  - **Refatoração de Ações no Card (agenda.tsx):** Simplificadas as ações rápidas do cartão de consulta em estado de agendamento inicial. O botão redundante de "Confirmar" foi removido por completo, deixando **exclusivamente o botão de "Cancelar"**, conferindo um fluxo de agendamento mais conciso, KISS e direto ao ponto.
+  - **Sincronização no Dashboard Principal (index.tsx):** Ajustado o card de KPI da Home de Admin. O indicador de "Pendentes" (laranja médico) foi substituído pelo indicador de **"Agendados"** em tom verde escuro (`#2E7D32`), assegurando consistência total em todo o painel gerencial.
+  - **Otimização de Performance no Agendamento (agenda.tsx):** 
+    - Removido o bloqueio síncrono `await` na requisição `fetchPatients()` no sucesso do agendamento, permitindo que a lista de pacientes atualize em background e o modal feche **instantaneamente**.
+    - Implementado spinner de `ActivityIndicator` no botão de "Salvar Agendamento" e desabilitação automática do botão durante o estado ativo de `isLoading`, prevenindo cliques duplicados por parte da recepcionista e melhorando significativamente a UX de resposta.
+  - **Fluxo de Contato e Notificação Customizável (patients.tsx):**
+    - Redesenhada a interface do modal de contato semi-automático. As mensagens de Lembrete e Cancelamento agora são representadas por tabs side-by-side integradas de alta densidade visual.
+    - Adicionado um editor em tempo real (TextInput multiline) que exibe a mensagem de template pré-formatada reativa (sincronizada com o paciente e consulta de referência), permitindo personalização pré-envio.
+     - Criado o botão **"Enviar WhatsApp"** centralizado e com largura total (100% de flex) direcionando via API oficial de deep-linking `wa.me` com o texto editado, removendo o botão de e-mail e simplificando o processo de contato da recepcionista.
+    - Removido o painel inferior de **"Próximas Datas"** do modal de contato rápido, tornando a interface de contato direta, leve, limpa e extremamente focada na ação de disparo da mensagem pré-configurada.
+    - **Leitor Automático de Variáveis Adaptável:** Refatorada a função `formatTemplate` com expressões regulares flexíveis e case-insensitive (`/gi`). O sistema agora substitui automaticamente qualquer placeholder escrito no banco, seja com chaves ou colchetes: `{nome}`, `[NOME]`, `{data}`, `[DATA]`, `{hora}`, `[HORA]`, `{telefone}`, `[TELEFONE]`, `{clinica}`, `[CLINICA]`.
+  - **Sugestões de Campos no Editor de Templates (settings.tsx):**
+    - Adicionado suporte a chips de sugestão reativos na janela modal de "Editar Mensagem" nas configurações.
+    - Exibido um ScrollView horizontal com atalhos visuais: `[NOME]`, `[DATA]`, `[HORA]`, `[CLINICA]`, `[TELEFONE]`. Ao tocar em qualquer chip, a variável correspondente é inserida instantaneamente ao final do texto, guiando o usuário de maneira interativa e prevenindo erros de digitação.
+  - **Ação de Falta Reintegrada na Agenda (agenda.tsx):**
+    - Adicionado novamente o botão **"Falta"** (com ícone `AlertTriangle` e estilo de alerta `#E65100`) no card de consultas sob o status `PENDING` (Agendado), permitindo que a recepcionista registre a ausência de um paciente diretamente a partir de um agendamento marcado ativo, garantindo controle completo.
+- **Próximo Passo:** Implementar o Sino de Notificação, Smart Banner duplo e fluxo de contato WhatsApp na Agenda.
+
+## 2026-05-26 (Sino, Smart Banner e Blindagem do Admin)
+
+- **Task:** Implementação de Sino, Smart Banner de dois estados, Validações Visuais e Máscaras de Agendamento.
+- **Status:** Concluído.
+- **Ações:**
+  - **Sino de Notificação e Badge Reativo (agenda.tsx):** Adicionado o ícone do Sino no cabeçalho administrativo com badge dinâmico que calcula e exibe de forma reativa a quantidade de lembretes pendentes para amanhã.
+  - **Smart Alert Card de Dois Estados (agenda.tsx):** Desenvolvido o Banner Inteligente com dois estados visuais. O Banner Laranja é ativado se houver pendências (*"Ações Requeridas Hoje"*), e o Banner Verde é exibido se tudo estiver em dia (*"Tudo sob Controle!"*). Ambos conectam-se diretamente à Central de Lembretes ao toque.
+  - **Validação de Formulário com Erros Visuais (agenda.tsx):** Criado o estado reativo `validationErrors` e integrado aos campos obrigatórios (Telefone, Serviço, Data, Horário) no modal de Novo Agendamento. Caso a recepcionista tente salvar com dados ausentes, o formulário exibe uma borda vermelha com fundo avermelhado suave (`#FFEBEE`) nos campos inválidos, gerando feedback instantâneo de alta fidelidade visual.
+  - **Máscara de Inputs e Reset de Estados (agenda.tsx):** Implementado o helper centralizado `closeNewAptModal` que limpa todos os estados de erro e campos de inputs ao salvar ou fechar o modal de criação.
+  - **Sincronização Ativa da Tela Início (index.tsx):** Adicionado `useFocusEffect` com o `useCallback` do React e conectadas as chamadas dinâmicas das Stores (`fetchAppointments`, `fetchPatients`, `fetchServices` e `fetchConfig`). Agora, sempre que a recepcionista abre a tela principal ("Início") ou navega de volta para ela, o dashboard é recarregado instantaneamente em plano de fundo com as estatísticas em tempo real, atualizando os KPIs e os próximos agendamentos de hoje de acordo com o Neon PostgreSQL, sem dados estáticos ou travados de cache.
+  - **Seguimentador de Escopo no Dashboard (index.tsx):** Adicionado um controle reativo por abas (Segmented Control/Tab Capsule) com design premium ("Hoje" vs "Geral (Anual)") permitindo alternar instantaneamente a perspectiva estatística do dashboard de administração. A aba "Hoje" foca na produtividade diária e calcula as taxas relativas ao dia atual, enquanto a aba "Geral" compila o histórico consolidado de todos os agendamentos salvos no banco. Os labels dos KPIs e os valores alteram-se de forma fluída e reativa.
+  - **Melhoria no Título Header:** Removido o padding nativo de `s.title` e transferido o alinhamento para o contêiner flexbox `headerRow`, posicionando o texto *"Agenda da Clínica"* perfeitamente flush no início esquerdo e emparelhado simetricamente ao Sino na direita.
+  - **Limpeza Visual do Card de Agendamento (index.tsx):** Removido o indicador de duração do serviço (ex: `30min`, `45min`) que ficava abaixo do horário das consultas na lista de "Agenda de Hoje" no Dashboard, simplificando a interface para focar nas informações centrais (Paciente, Serviço, Dentista e Status). A remoção foi feita com limpeza paralela da classe de estilo atrelada, garantindo código limpo.
+- **Próximo Passo:** Iniciar os testes automatizados E2E (End-to-End) com Playwright nas telas administrativas da Agenda, Pacientes e Dashboard para blindar todo o painel de administração contra regressões visuais e lógicas.
+
+## 2026-05-26 (Sincronização Completa do Cliente & TypeScript Fiel)
+
+- **Task:** Integração Real do Lado do Cliente e Sincronização ao Foco.
+- **Status:** Concluído.
+- **Ações:**
+  - **`useFocusEffect` em Pacientes (patients.tsx):** Adicionada sincronização em tempo real na tela de Pacientes para recarregar a lista do Neon PostgreSQL em segundo plano sempre que a tela ganha foco.
+  - **Remoção de Mocks no Agendamento do Cliente (booking.tsx):** Substituídos os serviços estáticos (`mockServices` com IDs `svc_xxx`) por dados de serviços dinâmicos do banco através da `useClinicStore`, prevenindo erros de validação UUID/foreign key no banco ao agendar consultas.
+  - **Remoção de Mocks na Home do Cliente (index.tsx):** Substituída a busca estática de serviços no agendamento por dados reais da `useClinicStore`, garantindo que o nome exato do tratamento seja exibido no cartão "Próximo Agendamento".
+  - **Sincronização de Foco no Cliente (index.tsx & profile.tsx):** Adicionados hooks `useFocusEffect` na Home e no Perfil do Paciente para garantir que alterações feitas em agendamentos sejam exibidas na interface do usuário instantaneamente sem necessidade de recarregar a aplicação.
+  - **Validação de Tipagem TS Completa:** Verificada toda a aplicação com `npx tsc --noEmit` apresentando compilação 100% livre de erros.
+- **Próximo Passo:** Implementação de testes automatizados de ponta a ponta (E2E) com Playwright para os fluxos da Agenda, Dashboard e Agendamento do Cliente.

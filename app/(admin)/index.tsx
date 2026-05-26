@@ -1,8 +1,8 @@
 // OdontoSync — Admin: Dashboard (Stitch: bb6e9a0c)
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { CalendarCheck, Clock, AlertTriangle, TrendingDown, Plus, Phone, ChevronRight } from 'lucide-react-native';
 import { KPICard } from '@/src/components/ui/KPICard';
 import { Card } from '@/src/components/ui/Card';
@@ -21,6 +21,18 @@ export default function AdminDashboard() {
   const { appointments } = useAppointmentStore();
   const { services } = useClinicStore();
 
+  useFocusEffect(
+    useCallback(() => {
+      // Sincroniza dados frescos do banco real ao focar na tela Início (Dashboard)
+      useAppointmentStore.getState().fetchAppointments();
+      useClinicStore.getState().fetchPatients();
+      useClinicStore.getState().fetchServices();
+      useClinicStore.getState().fetchConfig();
+    }, [])
+  );
+
+  const [timeRange, setTimeRange] = useState<'today' | 'overall'>('today');
+
   const getTodayStr = () => {
     const d = new Date();
     const yyyy = d.getFullYear();
@@ -35,13 +47,21 @@ export default function AdminDashboard() {
   const upcomingApts = todayApts.slice(0, 4);
   const firstName = user?.name.split(' ')[0] ?? 'Admin';
 
-  // Cálculos Funcionais dos KPIs
+  // Cálculos Funcionais dos KPIs — Hoje
   const confirmedToday = todayApts.filter(a => a.status === AppointmentStatus.CONFIRMED || a.status === AppointmentStatus.COMPLETED).length;
   const pendingToday = todayApts.filter(a => a.status === AppointmentStatus.PENDING).length;
   
   const totalToday = todayApts.filter(a => a.status !== AppointmentStatus.CANCELLED).length;
   const absentToday = todayApts.filter(a => a.status === AppointmentStatus.ABSENT).length;
   const absenceRate = totalToday > 0 ? Math.round((absentToday / totalToday) * 100) : 0;
+
+  // Cálculos Funcionais dos KPIs — Geral (Anual/Histórico Completo)
+  const confirmedOverall = appointments.filter(a => a.status === AppointmentStatus.CONFIRMED || a.status === AppointmentStatus.COMPLETED).length;
+  const pendingOverall = appointments.filter(a => a.status === AppointmentStatus.PENDING).length;
+  
+  const totalOverall = appointments.filter(a => a.status !== AppointmentStatus.CANCELLED).length;
+  const absentOverall = appointments.filter(a => a.status === AppointmentStatus.ABSENT).length;
+  const absenceRateOverall = totalOverall > 0 ? Math.round((absentOverall / totalOverall) * 100) : 0;
 
   return (
     <SafeAreaView style={s.container}>
@@ -54,10 +74,41 @@ export default function AdminDashboard() {
           <Avatar name={user?.name ?? 'Admin'} size={44} showBorder />
         </View>
 
+        <View style={s.tabContainer}>
+          <TouchableOpacity 
+            style={[s.tabItem, timeRange === 'today' && s.tabActiveItem]} 
+            onPress={() => setTimeRange('today')}
+            activeOpacity={0.8}
+          >
+            <Text style={[s.tabText, timeRange === 'today' && s.tabActiveText]}>Hoje</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[s.tabItem, timeRange === 'overall' && s.tabActiveItem]} 
+            onPress={() => setTimeRange('overall')}
+            activeOpacity={0.8}
+          >
+            <Text style={[s.tabText, timeRange === 'overall' && s.tabActiveText]}>Geral (Anual)</Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={s.kpiRow}>
-          <KPICard value={confirmedToday} label="Confirmados" icon={<CalendarCheck size={20} color={colors.primary} />} />
-          <KPICard value={pendingToday} label="Pendentes" icon={<Clock size={20} color="#E65100" />} color="#E65100" />
-          <KPICard value={`${absenceRate}%`} label="Taxa de Faltas" icon={<TrendingDown size={20} color={colors.error} />} color={colors.error} />
+          <KPICard 
+            value={timeRange === 'today' ? confirmedToday : confirmedOverall} 
+            label={timeRange === 'today' ? "Confirmados Hoje" : "Confirmados Geral"} 
+            icon={<CalendarCheck size={20} color={colors.primary} />} 
+          />
+          <KPICard 
+            value={timeRange === 'today' ? pendingToday : pendingOverall} 
+            label={timeRange === 'today' ? "Agendados Hoje" : "Agendados Geral"} 
+            icon={<Clock size={20} color="#2E7D32" />} 
+            color="#2E7D32" 
+          />
+          <KPICard 
+            value={`${timeRange === 'today' ? absenceRate : absenceRateOverall}%`} 
+            label={timeRange === 'today' ? "Taxa de Faltas Hoje" : "Faltas Geral"} 
+            icon={<TrendingDown size={20} color={colors.error} />} 
+            color={colors.error} 
+          />
         </View>
 
         <View style={s.section}>
@@ -75,7 +126,6 @@ export default function AdminDashboard() {
                 <View style={s.aptRow}>
                   <View style={s.timeCol}>
                     <Text style={s.aptTime}>{apt.time}</Text>
-                    <Text style={s.aptDuration}>{svc?.duration ?? 30}min</Text>
                   </View>
                   <View style={s.aptInfo}>
                     <Text style={s.aptPatient}>{apt.user?.name ?? '📱 ' + apt.phone}</Text>
@@ -136,6 +186,32 @@ const s = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: spacing.md, marginBottom: spacing.xl },
   greeting: { fontFamily: fonts.headline, fontSize: fontSizes.headlineMd, fontWeight: '700', color: colors.onSurface },
   sub: { fontFamily: fonts.body, fontSize: fontSizes.bodyMd, color: colors.onSurfaceVariant, marginTop: 2 },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.surfaceContainer,
+    borderRadius: 24,
+    padding: 4,
+    marginBottom: spacing.lg,
+  },
+  tabItem: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabActiveItem: {
+    backgroundColor: colors.primary,
+  },
+  tabText: {
+    fontFamily: fonts.label,
+    fontSize: fontSizes.labelMd,
+    color: colors.onSurfaceVariant,
+    fontWeight: '600',
+  },
+  tabActiveText: {
+    color: colors.onPrimary,
+  },
   kpiRow: { flexDirection: 'row', gap: 10, marginBottom: spacing.xl },
   section: { marginBottom: spacing.xl },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
@@ -145,7 +221,6 @@ const s = StyleSheet.create({
   aptRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   timeCol: { alignItems: 'center', minWidth: 50 },
   aptTime: { fontFamily: fonts.headline, fontSize: fontSizes.titleMd, fontWeight: '700', color: colors.primary },
-  aptDuration: { fontFamily: fonts.label, fontSize: fontSizes.labelSm, color: colors.outline },
   aptInfo: { flex: 1 },
   aptPatient: { fontFamily: fonts.body, fontSize: fontSizes.bodyMd, fontWeight: '600', color: colors.onSurface },
   aptService: { fontFamily: fonts.body, fontSize: fontSizes.bodySm, color: colors.onSurfaceVariant, marginTop: 2 },

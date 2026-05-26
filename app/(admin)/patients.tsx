@@ -1,8 +1,8 @@
 // OdontoSync — Admin: Patients (Stitch: ca2b18e4)
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Modal, TouchableWithoutFeedback } from 'react-native';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Modal, TouchableWithoutFeedback, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Search, Phone, Mail, ChevronRight, ChevronLeft, X, Calendar, Plus, Clock, FileText, AlertTriangle } from 'lucide-react-native';
 import { Card } from '@/src/components/ui/Card';
 import { Avatar } from '@/src/components/ui/Avatar';
@@ -11,7 +11,7 @@ import { useClinicStore } from '@/src/stores/clinicStore';
 import { useAppointmentStore } from '@/src/stores/appointmentStore';
 import { User, AppointmentStatus } from '@/src/types';
 import { colors, fonts, fontSizes, spacing } from '@/src/styles/tokens';
-import { Alert } from 'react-native';
+import { Alert } from '@/src/components/ui/Alert';
 
 const formatDateStr = (date: Date): string => {
   const yyyy = date.getFullYear();
@@ -45,10 +45,84 @@ export default function PatientsScreen() {
   const { patients, searchPatients, config, services } = useClinicStore();
   const { appointments } = useAppointmentStore();
   const [query, setQuery] = useState('');
+
+  // Sincroniza pacientes e agendamentos sempre que a tela recebe foco
+  useFocusEffect(
+    useCallback(() => {
+      useClinicStore.getState().fetchPatients();
+      useAppointmentStore.getState().fetchAppointments();
+    }, [])
+  );
   const [selectedPatient, setSelectedPatient] = useState<User | null>(null);
   const [isContactModalVisible, setIsContactModalVisible] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const itemRefs = useRef<Record<string, number>>({});
+  
+  const [selectedAptForContact, setSelectedAptForContact] = useState<typeof appointments[0] | null>(null);
+  const [selectedTemplateType, setSelectedTemplateType] = useState<'confirmation' | 'cancellation' | null>(null);
+  const [editedMessageText, setEditedMessageText] = useState('');
+
+  const openContactModal = () => {
+    const upcoming = selectedPatientHistory.filter(a => new Date(a.date + 'T12:00:00') >= new Date());
+    if (upcoming.length > 0) {
+      setSelectedAptForContact(upcoming[0]);
+    } else if (selectedPatientHistory.length > 0) {
+      setSelectedAptForContact(selectedPatientHistory[0]);
+    } else {
+      setSelectedAptForContact(null);
+    }
+    setSelectedTemplateType('confirmation');
+    setIsContactModalVisible(true);
+  };
+
+  useEffect(() => {
+    if (selectedPatient && selectedTemplateType) {
+      const template = selectedTemplateType === 'confirmation' 
+        ? config.confirmationTemplate 
+        : config.cancellationTemplate;
+      
+      const formatted = formatTemplate(
+        template,
+        selectedPatient.name,
+        selectedAptForContact?.date,
+        selectedAptForContact?.time
+      );
+      setEditedMessageText(formatted);
+    } else {
+      setEditedMessageText('');
+    }
+  }, [selectedTemplateType, selectedAptForContact, selectedPatient, config]);
+
+  const formatTemplate = (template: string, patientName: string, aptDate?: string, aptTime?: string) => {
+    let msg = template;
+    
+    // Expressões regulares case-insensitive para suportar {nome}, [NOME], {NOME}, [nome], etc.
+    const nameRegex = /[\{\[]nome[\}\]]/gi;
+    const phoneRegex = /[\{\[]telefone[\}\]]/gi;
+    const dateRegex = /[\{\[]data[\}\]]/gi;
+    const timeRegex = /[\{\[]hora[\}\]]/gi;
+    const clinicRegex = /[\{\[]clinica[\}\]]/gi;
+
+    msg = msg.replace(nameRegex, patientName);
+    msg = msg.replace(phoneRegex, config.phone || '');
+    msg = msg.replace(clinicRegex, config.name || 'OdontoSync');
+    
+    if (aptDate) {
+      const dateObj = new Date(aptDate + 'T12:00:00');
+      const formattedDate = dateObj.toLocaleDateString('pt-BR');
+      msg = msg.replace(dateRegex, formattedDate);
+    } else {
+      msg = msg.replace(dateRegex, '[Data]');
+    }
+
+    if (aptTime) {
+      msg = msg.replace(timeRegex, aptTime);
+    } else {
+      msg = msg.replace(timeRegex, '[Hora]');
+    }
+
+    return msg;
+  };
 
   const filtered = query ? searchPatients(query) : patients;
   
@@ -101,7 +175,7 @@ export default function PatientsScreen() {
                     </View>
                     <View style={s.pDetail}>
                       <Mail size={12} color={colors.outline} />
-                      <Text style={s.pEmail}>{p.email}</Text>
+                      <Text style={s.pEmail}>{p.email.startsWith('sem-email-') ? 'Sem e-mail' : p.email}</Text>
                     </View>
                   </View>
                   <View style={s.pRight}>
@@ -143,7 +217,7 @@ export default function PatientsScreen() {
                       <View style={s.profileInfo}>
                         <Text style={s.profileName}>{selectedPatient.name}</Text>
                         <Text style={s.profilePhone}>{selectedPatient.phone}</Text>
-                        <Text style={s.profileEmail}>{selectedPatient.email}</Text>
+                        <Text style={s.profileEmail}>{selectedPatient.email.startsWith('sem-email-') ? 'Sem e-mail' : selectedPatient.email}</Text>
                       </View>
                       <TouchableOpacity style={s.closeBtn} onPress={() => setSelectedPatient(null)}>
                         <X size={20} color={colors.outline} />
@@ -166,7 +240,7 @@ export default function PatientsScreen() {
                       <TouchableOpacity 
                         style={s.btnSecondary} 
                         activeOpacity={0.8}
-                        onPress={() => setIsContactModalVisible(true)}
+                        onPress={openContactModal}
                       >
                         <Phone size={18} color={colors.primary} />
                       </TouchableOpacity>
@@ -288,37 +362,94 @@ export default function PatientsScreen() {
                       </TouchableOpacity>
                     </View>
 
-                    <Text style={s.historyTitle}>Enviar Mensagem</Text>
+                    {selectedPatientHistory.length > 0 && (
+                      <View style={{ marginBottom: spacing.md }}>
+                        <Text style={s.contactDatesTitle}>Consulta de Referência</Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
+                          {selectedPatientHistory.map((apt) => {
+                            const isSelected = selectedAptForContact?.id === apt.id;
+                            const formattedDate = new Date(apt.date + 'T12:00:00').toLocaleDateString('pt-BR');
+                            return (
+                              <TouchableOpacity
+                                key={apt.id}
+                                style={[
+                                  s.refAptChip,
+                                  isSelected && s.refAptChipActive
+                                ]}
+                                onPress={() => setSelectedAptForContact(apt)}
+                              >
+                                <Text style={[s.refAptChipTxt, isSelected && s.refAptChipTxtActive]}>
+                                  {formattedDate} às {apt.time}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </ScrollView>
+                      </View>
+                    )}
+
+                    <Text style={s.contactDatesTitle}>Mensagens Disponíveis</Text>
                     
-                    <TouchableOpacity style={s.msgTemplateBtn} activeOpacity={0.7} onPress={() => Alert.alert('WhatsApp', 'Redirecionando para o WhatsApp com o Lembrete...')}>
-                      <View style={s.msgTemplateHeader}>
-                        <Clock size={16} color={colors.primary} />
-                        <Text style={s.msgTemplateTitle}>Lembrete de Consulta</Text>
-                      </View>
-                      <Text style={s.msgTemplateText} numberOfLines={3}>{config.confirmationTemplate}</Text>
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
+                      <TouchableOpacity 
+                        style={[
+                          s.msgTemplateTab, 
+                          selectedTemplateType === 'confirmation' && s.msgTemplateTabActive
+                        ]} 
+                        activeOpacity={0.7} 
+                        onPress={() => setSelectedTemplateType('confirmation')}
+                      >
+                        <Clock size={16} color={selectedTemplateType === 'confirmation' ? colors.onPrimary : colors.primary} />
+                        <Text style={[
+                          s.msgTemplateTabTxt, 
+                          selectedTemplateType === 'confirmation' && s.msgTemplateTabTxtActive
+                        ]}>Lembrete</Text>
+                      </TouchableOpacity>
 
-                    <TouchableOpacity style={[s.msgTemplateBtn, { borderColor: colors.errorContainer, backgroundColor: colors.errorContainer + '10' }]} activeOpacity={0.7} onPress={() => Alert.alert('WhatsApp', 'Redirecionando para o WhatsApp com o Cancelamento...')}>
-                      <View style={s.msgTemplateHeader}>
-                        <AlertTriangle size={16} color={colors.error} />
-                        <Text style={[s.msgTemplateTitle, { color: colors.error }]}>Aviso de Cancelamento</Text>
-                      </View>
-                      <Text style={s.msgTemplateText} numberOfLines={3}>{config.cancellationTemplate}</Text>
-                    </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[
+                          s.msgTemplateTab, 
+                          selectedTemplateType === 'cancellation' && s.msgTemplateTabActive,
+                          selectedTemplateType !== 'cancellation' && { borderColor: colors.error + '40' }
+                        ]} 
+                        activeOpacity={0.7} 
+                        onPress={() => setSelectedTemplateType('cancellation')}
+                      >
+                        <AlertTriangle size={16} color={selectedTemplateType === 'cancellation' ? colors.onPrimary : colors.error} />
+                        <Text style={[
+                          s.msgTemplateTabTxt, 
+                          selectedTemplateType === 'cancellation' && s.msgTemplateTabTxtActive,
+                          selectedTemplateType !== 'cancellation' && { color: colors.error }
+                        ]}>Cancelamento</Text>
+                      </TouchableOpacity>
+                    </View>
 
-                    <View style={s.contactDatesPanel}>
-                      <Text style={s.contactDatesTitle}>Próximas Datas</Text>
-                      {selectedPatientHistory.filter(a => new Date(a.date + 'T12:00:00') >= new Date()).length > 0 ? (
-                        selectedPatientHistory.filter(a => new Date(a.date + 'T12:00:00') >= new Date()).map(apt => (
-                          <View key={apt.id} style={s.contactDateRow}>
-                            <Calendar size={14} color={colors.primary} />
-                            <Text style={s.contactDateTxt}>{new Date(apt.date + 'T12:00:00').toLocaleDateString('pt-BR')} às {apt.time}</Text>
-                            <Badge variant="status" status={apt.status} />
-                          </View>
-                        ))
-                      ) : (
-                        <Text style={s.contactDateEmpty}>Nenhuma consulta futura.</Text>
-                      )}
+                    <Text style={s.contactDatesTitle}>Mensagem de Notificação</Text>
+                    <View style={s.editorContainer}>
+                      <TextInput
+                        style={s.editorInput}
+                        multiline
+                        numberOfLines={5}
+                        value={editedMessageText}
+                        onChangeText={setEditedMessageText}
+                        placeholder="Escreva a mensagem aqui..."
+                        placeholderTextColor={colors.outline}
+                      />
+                    </View>
+
+                    <View style={s.actionRow}>
+                      <TouchableOpacity
+                        style={[s.waBtn, { flex: 1 }]}
+                        activeOpacity={0.8}
+                        onPress={() => {
+                          const cleanPhone = selectedPatient.phone.replace(/\D/g, '');
+                          const waPhone = cleanPhone.startsWith('55') ? cleanPhone : '55' + cleanPhone;
+                          Linking.openURL(`https://wa.me/${waPhone}?text=${encodeURIComponent(editedMessageText)}`);
+                        }}
+                      >
+                        <Phone size={18} color={colors.onPrimary} style={{ marginRight: 6 }} />
+                        <Text style={s.waBtnTxt}>Enviar WhatsApp</Text>
+                      </TouchableOpacity>
                     </View>
                   </>
                 )}
@@ -411,9 +542,110 @@ const s = StyleSheet.create({
   msgTemplateTitle: { fontFamily: fonts.headline, fontSize: fontSizes.labelLg, fontWeight: '700', color: colors.primary },
   msgTemplateText: { fontFamily: fonts.body, fontSize: fontSizes.bodySm, color: colors.onSurfaceVariant, lineHeight: 18 },
 
+  msgTemplateTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderWidth: 1.5,
+    borderColor: colors.outlineVariant,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceContainerLow,
+  },
+  msgTemplateTabActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  msgTemplateTabTxt: {
+    fontFamily: fonts.label,
+    fontSize: fontSizes.labelSm,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  msgTemplateTabTxtActive: {
+    color: colors.onPrimary,
+  },
+
+  editorContainer: {
+    borderWidth: 1.5,
+    borderColor: colors.outlineVariant,
+    borderRadius: 16,
+    backgroundColor: colors.surfaceContainerLow,
+    padding: 12,
+    marginBottom: 16,
+  },
+  editorInput: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.bodySm,
+    color: colors.onSurface,
+    textAlignVertical: 'top',
+    minHeight: 100,
+    lineHeight: 18,
+  },
+
+  actionRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: spacing.md,
+  },
+  waBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2E7D32', // Verde WhatsApp
+    paddingVertical: 14,
+    borderRadius: 16,
+  },
+  waBtnTxt: {
+    fontFamily: fonts.label,
+    fontSize: fontSizes.labelMd,
+    color: colors.onPrimary,
+    fontWeight: '700',
+  },
+  emailBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+    paddingVertical: 14,
+    borderRadius: 16,
+  },
+  emailBtnTxt: {
+    fontFamily: fonts.label,
+    fontSize: fontSizes.labelMd,
+    color: colors.onPrimary,
+    fontWeight: '700',
+  },
+
   contactDatesPanel: { backgroundColor: colors.surfaceContainerHigh, borderRadius: 16, padding: 14, marginTop: spacing.md },
   contactDatesTitle: { fontFamily: fonts.headline, fontSize: fontSizes.labelLg, fontWeight: '700', color: colors.onSurface, marginBottom: 10 },
   contactDateRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
   contactDateTxt: { flex: 1, fontFamily: fonts.body, fontSize: fontSizes.bodySm, color: colors.onSurface, fontWeight: '500' },
   contactDateEmpty: { fontFamily: fonts.body, fontSize: fontSizes.bodySm, color: colors.outline, fontStyle: 'italic' },
+  refAptChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceContainerLow,
+    borderWidth: 1.5,
+    borderColor: colors.outlineVariant,
+  },
+  refAptChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  refAptChipTxt: {
+    fontFamily: fonts.label,
+    fontSize: fontSizes.labelSm,
+    color: colors.onSurface,
+    fontWeight: '500',
+  },
+  refAptChipTxtActive: {
+    color: colors.onPrimary,
+    fontWeight: '600',
+  },
 });

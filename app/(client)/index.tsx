@@ -1,7 +1,7 @@
 // OdontoSync — Client Home (Stitch: 0766f16f)
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CalendarPlus, Clock, UserCircle, Heart, Bell, Stethoscope } from 'lucide-react-native';
 import { Card } from '@/src/components/ui/Card';
@@ -9,17 +9,26 @@ import { Badge } from '@/src/components/ui/Badge';
 import { useAuthStore } from '@/src/stores/authStore';
 import { useAppointmentStore } from '@/src/stores/appointmentStore';
 import { useNotificationStore } from '@/src/stores/notificationStore';
+import { useClinicStore } from '@/src/stores/clinicStore';
 import { colors, fonts, fontSizes, spacing, shadows } from '@/src/styles/tokens';
-import { mockServices } from '@/src/mocks/services';
 
 export default function ClientHomeScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { getNextAppointment } = useAppointmentStore();
   const { unreadCount } = useNotificationStore();
+  const { services } = useClinicStore();
+
+  useFocusEffect(
+    useCallback(() => {
+      useAppointmentStore.getState().fetchAppointments();
+      useClinicStore.getState().fetchServices();
+    }, [])
+  );
+
   const firstName = user?.name.split(' ')[0] ?? 'Paciente';
   const nextApt = user ? getNextAppointment(user.id) : undefined;
-  const service = nextApt ? mockServices.find((s) => s.id === nextApt.serviceId) : undefined;
+  const service = nextApt ? services.find((s) => s.id === nextApt.serviceId) : undefined;
 
   const quickActions = [
     { icon: CalendarPlus, label: 'Agendar', color: colors.primary, route: '/(client)/booking' as const },
@@ -49,7 +58,7 @@ export default function ClientHomeScreen() {
               <View style={s.aptRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={s.aptLabel}>Data e Horário</Text>
-                  <Text style={s.aptVal}>{nextApt.date}, {nextApt.time}</Text>
+                  <Text style={s.aptVal}>{new Date(nextApt.date + 'T12:00:00').toLocaleDateString('pt-BR')}, {nextApt.time}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={s.aptLabel}>Dentista</Text>

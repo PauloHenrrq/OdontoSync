@@ -38,7 +38,7 @@ const defaultConfig: ClinicConfig = {
   id: '',
   name: 'Odonto Excell',
   absenceReduction: true,
-  reminderHoursBefore: 24,
+  reminderHoursBefore: '24',
   confirmationTemplate: '',
   cancellationTemplate: '',
 };
