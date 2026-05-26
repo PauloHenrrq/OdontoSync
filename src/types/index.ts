@@ -105,7 +105,7 @@ export interface ClinicConfig {
   phone?: string;
   logoUrl?: string;
   absenceReduction: boolean;
-  reminderHoursBefore: number;
+  reminderHoursBefore: string;
   confirmationTemplate: string;
   cancellationTemplate: string;
 }
@@ -140,6 +140,7 @@ export interface BookingDTO {
   date: string;
   time: string;
   notes?: string;
+  patientName?: string;
 }
 
 // ============================================================

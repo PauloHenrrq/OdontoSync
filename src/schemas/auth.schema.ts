@@ -41,6 +41,7 @@ export const registerSchema = z
       .regex(/[A-Z]/, 'Senha deve conter pelo menos uma letra maiúscula')
       .regex(/[0-9]/, 'Senha deve conter pelo menos um número'),
     confirmPassword: z.string().min(1, 'Confirme sua senha'),
+    code: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Senhas não coincidem',

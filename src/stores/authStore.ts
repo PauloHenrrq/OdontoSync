@@ -17,7 +17,8 @@ interface AuthState {
 
   // Actions
   login: (emailOrPhone: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, phone: string, password: string) => Promise<boolean>;
+  sendOtp: (phone: string) => Promise<{ success: boolean; devCode?: string; error?: string }>;
+  register: (name: string, email: string, phone: string, password: string, code: string) => Promise<boolean>;
   logout: () => Promise<void>;
   clearError: () => void;
 }
@@ -47,26 +48,41 @@ export const useAuthStore = create<AuthState>()(
         return false;
       },
 
-      register: async (name, email, phone, password) => {
+      sendOtp: async (phone) => {
+        set({ isLoading: true, error: null });
+        const result = await AuthService.sendOtp(phone);
+        set({ isLoading: false });
+        return result;
+      },
+
+      register: async (name, email, phone, password, code) => {
         set({ isLoading: true, error: null });
 
-        const newUser = await AuthService.register(name, email, phone, password);
+        try {
+          const newUser = await AuthService.register(name, email, phone, password, code);
 
-        if (!newUser) {
+          if (!newUser) {
+            set({
+              isLoading: false,
+              error: 'Não foi possível concluir o cadastro.',
+            });
+            return false;
+          }
+
+          set({
+            user: newUser,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          });
+          return true;
+        } catch (err: any) {
           set({
             isLoading: false,
-            error: 'Email ou telefone já cadastrado.',
+            error: err.message || 'Código de verificação incorreto ou inválido.',
           });
           return false;
         }
-
-        set({
-          user: newUser,
-          isAuthenticated: true,
-          isLoading: false,
-          error: null,
-        });
-        return true;
       },
 
       logout: async () => {

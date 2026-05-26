@@ -11,7 +11,7 @@ export const mockClinicConfig: ClinicConfig = {
   phone: '(11) 3333-4444',
   logoUrl: undefined,
   absenceReduction: true,
-  reminderHoursBefore: 24,
+  reminderHoursBefore: '24',
   confirmationTemplate:
     'Olá {nome}! Sua consulta na Odonto Excell está confirmada para {data} às {hora}. Caso precise reagendar, acesse o app ou ligue para {telefone}.',
   cancellationTemplate:

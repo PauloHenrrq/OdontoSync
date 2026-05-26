@@ -1,8 +1,7 @@
-// OdontoSync — Client: Profile (Stitch: a3f71b04)
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { LogOut, ChevronRight, History, Settings, Shield, HelpCircle, User } from 'lucide-react-native';
 import { Card } from '@/src/components/ui/Card';
 import { Avatar } from '@/src/components/ui/Avatar';
@@ -16,6 +15,12 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { getMyAppointments } = useAppointmentStore();
+
+  useFocusEffect(
+    useCallback(() => {
+      useAppointmentStore.getState().fetchAppointments();
+    }, [])
+  );
 
   const appointments = user ? getMyAppointments(user.id) : [];
   const completedCount = appointments.filter((a) => a.status === 'COMPLETED').length;

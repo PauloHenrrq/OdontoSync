@@ -1,5 +1,4 @@
-// OdontoSync — Client: Booking (Stitch: e6790ca8)
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -8,18 +7,24 @@ import { Button } from '@/src/components/ui/Button';
 import { Alert } from '@/src/components/ui/Alert';
 import { useAuthStore } from '@/src/stores/authStore';
 import { useAppointmentStore } from '@/src/stores/appointmentStore';
-import { mockServices, mockDentists, mockTimeSlots } from '@/src/mocks/services';
+import { useClinicStore } from '@/src/stores/clinicStore';
+import { mockDentists, mockTimeSlots } from '@/src/mocks/services';
 import { colors, fonts, fontSizes, spacing } from '@/src/styles/tokens';
 
 export default function BookingScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { bookAppointment, isLoading } = useAppointmentStore();
+  const { services } = useClinicStore();
   const [step, setStep] = useState(0);
   const [selectedService, setSelectedService] = useState('');
   const [selectedDentist, setSelectedDentist] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
+
+  useEffect(() => {
+    useClinicStore.getState().fetchServices();
+  }, []);
 
   const dates = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
@@ -57,7 +62,7 @@ export default function BookingScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.scroll}>
         {step === 0 && (
           <View style={s.grid}>
-            {mockServices.map((svc) => (
+            {services.map((svc) => (
               <TouchableOpacity key={svc.id} style={[s.chip, selectedService === svc.id && s.chipActive]} onPress={() => setSelectedService(svc.id)}>
                 {selectedService === svc.id && <Check size={16} color={colors.onPrimaryFixed} />}
                 <Text style={[s.chipTxt, selectedService === svc.id && s.chipTxtActive]}>{svc.name}</Text>

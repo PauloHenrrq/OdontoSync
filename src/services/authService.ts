@@ -18,20 +18,33 @@ export const AuthService = {
     }
   },
 
-  register: async (name: string, email: string, phone: string, password: string): Promise<User | null> => {
+  sendOtp: async (phone: string): Promise<{ success: boolean; devCode?: string; error?: string }> => {
+    try {
+      const response = await api.post<{ success: boolean; devCode?: string }>('/auth/send-otp', {
+        phone,
+      });
+      return response;
+    } catch (error: any) {
+      console.error('Send OTP error:', error);
+      return { success: false, error: error.message || 'Erro ao enviar código.' };
+    }
+  },
+
+  register: async (name: string, email: string, phone: string, password: string, code: string): Promise<User | null> => {
     try {
       const response = await api.post<{ token: string; user: User }>('/auth/register', {
         name,
         email,
         phone,
         password,
+        code,
       });
       
       await AsyncStorage.setItem('auth_token', response.token);
       return response.user;
     } catch (error) {
       console.error('Register error:', error);
-      return null;
+      throw error; // Propaga o erro real para capturar a mensagem correta na UI
     }
   },
 
