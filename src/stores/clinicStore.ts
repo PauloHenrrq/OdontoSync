@@ -55,20 +55,32 @@ export const useClinicStore = create<ClinicStore>()(
 
     // Actions
     fetchConfig: async () => {
-      const config = await ClinicService.getConfig();
-      if (config) {
-        set({ config });
+      try {
+        const config = await ClinicService.getConfig();
+        if (config) {
+          set({ config });
+        }
+      } catch (err) {
+        // Fallback silencioso em caso de erro de rede ou sessão expirada
       }
     },
 
     fetchPatients: async () => {
-      const patients = await ClinicService.getPatients();
-      set({ patients });
+      try {
+        const patients = await ClinicService.getPatients();
+        set({ patients });
+      } catch (err) {
+        // Fallback silencioso em caso de erro de rede ou sessão expirada
+      }
     },
 
     fetchServices: async () => {
-      const services = await ClinicService.getServices();
-      set({ services });
+      try {
+        const services = await ClinicService.getServices();
+        set({ services });
+      } catch (err) {
+        // Fallback silencioso em caso de erro de rede ou sessão expirada
+      }
     },
 
     updateConfig: (partial) => {

@@ -56,6 +56,16 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      // Sessão expirada ou token inválido! Limpa as credenciais locais e força o logout
+      await AsyncStorage.removeItem('auth_token');
+      try {
+        const { useAuthStore } = require('../stores/authStore');
+        useAuthStore.getState().logout();
+      } catch (storeError) {
+        // Ignora erros de importação cíclica em tempo de inicialização secundária
+      }
+    }
     const errorData = await response.json().catch(() => null);
     throw new Error(errorData?.error || `Request failed with status ${response.status}`);
   }

@@ -1,10 +1,10 @@
 // ============================================================
 // OdontoSync — Client Layout (Tab Navigator)
-// 4 tabs: Home, Booking, Alerts, Profile
+// 4 tabs: Home, Consultas, Alertas, Perfil
 // ============================================================
 
 import { Tabs } from 'expo-router';
-import { Home, CalendarPlus, Bell, UserCircle } from 'lucide-react-native';
+import { Home, ClipboardList, Bell, UserCircle } from 'lucide-react-native';
 import { colors, fonts } from '@/src/styles/tokens';
 import { useNotificationStore } from '@/src/stores/notificationStore';
 import { View, Text, StyleSheet } from 'react-native';
@@ -70,11 +70,11 @@ export default function ClientLayout() {
         }}
       />
       <Tabs.Screen
-        name="booking"
+        name="appointments"
         options={{
-          title: 'Agendar',
+          title: 'Consultas',
           tabBarIcon: ({ color, size }) => (
-            <CalendarPlus size={size} color={color} />
+            <ClipboardList size={size} color={color} />
           ),
         }}
       />
@@ -102,3 +102,4 @@ export default function ClientLayout() {
     </Tabs>
   );
 }
+

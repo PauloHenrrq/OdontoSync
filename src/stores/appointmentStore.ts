@@ -43,13 +43,17 @@ export const useAppointmentStore = create<AppointmentStore>()(
     // Actions
     fetchAppointments: async () => {
       set({ isLoading: true });
-      const rawAppointments = await AppointmentService.getAll();
-      // Normaliza datas ISO completas (ex: "2026-05-21T10:00:00.000Z") para "YYYY-MM-DD"
-      const appointments = rawAppointments.map((a) => ({
-        ...a,
-        date: a.date?.includes('T') ? a.date.split('T')[0] : a.date,
-      }));
-      set({ appointments, isLoading: false });
+      try {
+        const rawAppointments = await AppointmentService.getAll();
+        // Normaliza datas ISO completas (ex: "2026-05-21T10:00:00.000Z") para "YYYY-MM-DD"
+        const appointments = rawAppointments.map((a) => ({
+          ...a,
+          date: a.date?.includes('T') ? a.date.split('T')[0] : a.date,
+        }));
+        set({ appointments, isLoading: false });
+      } catch (err) {
+        set({ isLoading: false });
+      }
     },
 
     getMyAppointments: (userId) => {
@@ -58,15 +62,30 @@ export const useAppointmentStore = create<AppointmentStore>()(
 
     getNextAppointment: (userId) => {
       const today = new Date().toISOString().split('T')[0] ?? '';
+
+      // Auxiliar interno para detectar agendamento vencido (margem de 15 min de tolerância)
+      const isAppointmentExpired = (dateStr: string, timeStr: string): boolean => {
+        try {
+          const [year, month, day] = dateStr.split('-').map(Number);
+          const [hours, minutes] = timeStr.split(':').map(Number);
+          const appointmentTime = new Date(year, month - 1, day, hours, minutes);
+          const limitTime = new Date(appointmentTime.getTime() + 15 * 60 * 1000);
+          return new Date() > limitTime;
+        } catch {
+          return false;
+        }
+      };
+
       return get()
         .appointments.filter(
           (a) =>
             a.userId === userId &&
             a.date >= today &&
+            !isAppointmentExpired(a.date, a.time) &&
             (a.status === AppointmentStatus.CONFIRMED ||
               a.status === AppointmentStatus.PENDING)
         )
-        .sort((a, b) => a.date.localeCompare(b.date))[0];
+        .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time))[0];
     },
 
     bookAppointment: async (userId, phone, booking) => {

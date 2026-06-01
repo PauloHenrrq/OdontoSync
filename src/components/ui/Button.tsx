@@ -27,6 +27,7 @@ interface ButtonProps {
   loading?: boolean;
   fullWidth?: boolean;
   icon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
 }
 
 const variantStyles: Record<ButtonVariant, { container: ViewStyle; text: TextStyle }> = {
@@ -72,6 +73,7 @@ export function Button({
   loading = false,
   fullWidth = false,
   icon,
+  rightIcon,
 }: ButtonProps) {
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -105,10 +107,12 @@ export function Button({
               vStyle.text,
               sStyle.text,
               icon ? { marginLeft: 8 } : undefined,
+              rightIcon ? { marginRight: 8 } : undefined,
             ]}
           >
             {title}
           </Text>
+          {rightIcon}
         </>
       )}
     </TouchableOpacity>

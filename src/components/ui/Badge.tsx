@@ -22,9 +22,9 @@ const statusConfig: Record<AppointmentStatus, { bg: string; text: string; label:
     label: 'Agendado',
   },
   [AppointmentStatus.CONFIRMED]: {
-    bg: colors.primaryFixed + '40',
-    text: colors.primary,
-    label: 'Confirmado',
+    bg: '#E8F5E9',
+    text: '#2E7D32',
+    label: 'Agendado',
   },
   [AppointmentStatus.COMPLETED]: {
     bg: '#E8F5E9',

@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Modal, TouchableWithoutFeedback, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Search, Phone, Mail, ChevronRight, ChevronLeft, X, Calendar, Plus, Clock, FileText, AlertTriangle } from 'lucide-react-native';
+import { Search, Phone, Mail, ChevronRight, ChevronLeft, Check, X, Calendar, Plus, Clock, FileText, AlertTriangle } from 'lucide-react-native';
 import { Card } from '@/src/components/ui/Card';
 import { Avatar } from '@/src/components/ui/Avatar';
 import { Badge } from '@/src/components/ui/Badge';
@@ -18,6 +18,14 @@ const formatDateStr = (date: Date): string => {
   const mm = String(date.getMonth() + 1).padStart(2, '0');
   const dd = String(date.getDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
+};
+
+const isPastDate = (dateStr: string): boolean => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const aptDate = new Date(dateStr + 'T12:00:00');
+  aptDate.setHours(0, 0, 0, 0);
+  return aptDate < today;
 };
 
 const getDaysInMonth = (year: number, month: number): number => {
@@ -61,6 +69,7 @@ export default function PatientsScreen() {
   const [selectedAptForContact, setSelectedAptForContact] = useState<typeof appointments[0] | null>(null);
   const [selectedTemplateType, setSelectedTemplateType] = useState<'confirmation' | 'cancellation' | null>(null);
   const [editedMessageText, setEditedMessageText] = useState('');
+  const [isRefAptsExpanded, setIsRefAptsExpanded] = useState(false);
 
   const openContactModal = () => {
     const upcoming = selectedPatientHistory.filter(a => new Date(a.date + 'T12:00:00') >= new Date());
@@ -72,6 +81,7 @@ export default function PatientsScreen() {
       setSelectedAptForContact(null);
     }
     setSelectedTemplateType('confirmation');
+    setIsRefAptsExpanded(false);
     setIsContactModalVisible(true);
   };
 
@@ -231,7 +241,7 @@ export default function PatientsScreen() {
                         activeOpacity={0.8}
                         onPress={() => {
                           setSelectedPatient(null);
-                          router.push('/(admin)/agenda?openNew=true');
+                          router.push(`/(admin)/agenda?openNew=true&phone=${encodeURIComponent(selectedPatient.phone)}&name=${encodeURIComponent(selectedPatient.name)}`);
                         }}
                       >
                         <Plus size={18} color={colors.onPrimary} />
@@ -271,11 +281,10 @@ export default function PatientsScreen() {
                           
                           // Verifica se o paciente teve agendamento neste dia
                           const hasHistory = selectedPatientHistory.some(a => a.date === dayStr);
-                          
                           return (
                             <TouchableOpacity 
                               key={dayStr} 
-                              style={[s.dayCell, hasHistory && s.dayCellHasHistory]}
+                              style={s.dayCell}
                               activeOpacity={hasHistory ? 0.7 : 1}
                               onPress={() => {
                                 if (hasHistory) {
@@ -286,9 +295,14 @@ export default function PatientsScreen() {
                                 }
                               }}
                             >
-                              <Text style={[s.dayCellTxt, hasHistory && s.dayCellTxtHasHistory]}>
-                                {day.getDate()}
-                              </Text>
+                              <View style={[
+                                s.dayCellInner,
+                                hasHistory && s.dayCellHasHistory
+                              ]}>
+                                <Text style={[s.dayCellTxt, hasHistory && s.dayCellTxtHasHistory]}>
+                                  {day.getDate()}
+                                </Text>
+                              </View>
                             </TouchableOpacity>
                           );
                         })}
@@ -300,15 +314,21 @@ export default function PatientsScreen() {
                       {selectedPatientHistory.length > 0 ? (
                         selectedPatientHistory.map(apt => {
                           const svc = services.find(s => s.id === apt.serviceId) || apt.service;
+                          const isOverdue = (apt.status === AppointmentStatus.PENDING || apt.status === AppointmentStatus.CONFIRMED) && isPastDate(apt.date);
                           return (
                             <View key={apt.id} style={s.timelineItem} onLayout={(e) => { itemRefs.current[apt.id] = e.nativeEvent.layout.y; }}>
                               <View style={s.timelineLine} />
                               <View style={s.timelineDot} />
                               <View style={s.timelineContent}>
                                 <View style={s.timelineHeader}>
-                                  <Text style={s.timelineDate}>
-                                    {new Date(apt.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                  </Text>
+                                  <View style={{ flex: 1, alignItems: 'flex-start' }}>
+                                    <Text style={s.timelineDate}>
+                                      {new Date(apt.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                    </Text>
+                                    {isOverdue && (
+                                      <Text style={s.overdueHeaderTxt}>Prazo Excedido</Text>
+                                    )}
+                                  </View>
                                   <Badge variant="status" status={apt.status} />
                                 </View>
                                 <Text style={s.timelineSvc}>{svc?.name ?? 'Consulta'}</Text>
@@ -366,7 +386,7 @@ export default function PatientsScreen() {
                       <View style={{ marginBottom: spacing.md }}>
                         <Text style={s.contactDatesTitle}>Consulta de Referência</Text>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
-                          {selectedPatientHistory.map((apt) => {
+                          {selectedPatientHistory.slice(0, 2).map((apt) => {
                             const isSelected = selectedAptForContact?.id === apt.id;
                             const formattedDate = new Date(apt.date + 'T12:00:00').toLocaleDateString('pt-BR');
                             return (
@@ -384,7 +404,44 @@ export default function PatientsScreen() {
                               </TouchableOpacity>
                             );
                           })}
+                          {selectedPatientHistory.length > 2 && (
+                            <TouchableOpacity
+                              style={s.refAptPlusChip}
+                              onPress={() => setIsRefAptsExpanded(!isRefAptsExpanded)}
+                              activeOpacity={0.7}
+                            >
+                              <Text style={s.refAptPlusTxt}>
+                                {isRefAptsExpanded ? 'Recolher' : `+${selectedPatientHistory.length - 2}`}
+                              </Text>
+                            </TouchableOpacity>
+                          )}
                         </ScrollView>
+
+                        {isRefAptsExpanded && selectedPatientHistory.length > 2 && (
+                          <View style={s.expandedListContainer}>
+                            {selectedPatientHistory.map((apt) => {
+                              const isSelected = selectedAptForContact?.id === apt.id;
+                              const formattedDate = new Date(apt.date + 'T12:00:00').toLocaleDateString('pt-BR');
+                              return (
+                                <TouchableOpacity
+                                  key={apt.id}
+                                  style={[s.expandedRow, isSelected && s.expandedRowActive]}
+                                  onPress={() => {
+                                    setSelectedAptForContact(apt);
+                                    setIsRefAptsExpanded(false);
+                                  }}
+                                >
+                                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Text style={[s.expandedDateTxt, isSelected && s.expandedDateTxtActive]}>
+                                      {formattedDate} às {apt.time}
+                                    </Text>
+                                    {isSelected && <Check size={16} color={colors.primary} />}
+                                  </View>
+                                </TouchableOpacity>
+                              );
+                            })}
+                          </View>
+                        )}
                       </View>
                     )}
 
@@ -524,7 +581,14 @@ const s = StyleSheet.create({
   weekdayRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   weekdayTxt: { flex: 1, textAlign: 'center', fontFamily: fonts.label, fontSize: 11, color: colors.outline, fontWeight: '600' },
   daysGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 6 },
-  dayCell: { width: `${100 / 7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 20 },
+  dayCell: { width: `${100 / 7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center' },
+  dayCellInner: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   dayCellHasHistory: { backgroundColor: colors.primaryFixed },
   dayCellEmpty: { width: `${100 / 7}%`, aspectRatio: 1 },
   dayCellTxt: { fontFamily: fonts.bodyMedium, fontSize: 13, color: colors.onSurface },
@@ -647,5 +711,56 @@ const s = StyleSheet.create({
   refAptChipTxtActive: {
     color: colors.onPrimary,
     fontWeight: '600',
+  },
+  refAptPlusChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: colors.primaryFixed + '30',
+    borderWidth: 1.5,
+    borderColor: colors.primaryFixedDim,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  refAptPlusTxt: {
+    fontFamily: fonts.label,
+    fontSize: fontSizes.labelSm,
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  expandedListContainer: {
+    backgroundColor: colors.surfaceContainerLow,
+    borderRadius: 12,
+    marginTop: 8,
+    padding: 8,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: colors.surfaceContainerHigh,
+  },
+  expandedRow: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: 'transparent',
+  },
+  expandedRowActive: {
+    backgroundColor: colors.surfaceContainerLowest,
+  },
+  expandedDateTxt: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: fontSizes.bodySm,
+    color: colors.onSurfaceVariant,
+  },
+  expandedDateTxtActive: {
+    fontFamily: fonts.label,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  overdueHeaderTxt: {
+    fontFamily: fonts.label,
+    fontSize: 11,
+    color: colors.error,
+    fontWeight: '700',
+    marginTop: 4,
   },
 });

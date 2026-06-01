@@ -1,7 +1,8 @@
 // OdontoSync — Client: Alerts & Care Tips (Stitch: 09ab092e)
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
 import { Bell, Heart, CheckCheck } from 'lucide-react-native';
 import { Card } from '@/src/components/ui/Card';
 import { useNotificationStore } from '@/src/stores/notificationStore';
@@ -9,7 +10,20 @@ import { colors, fonts, fontSizes, spacing } from '@/src/styles/tokens';
 
 export default function AlertsScreen() {
   const { notifications, careTips, markAsRead, markAllAsRead, unreadCount } = useNotificationStore();
+  const { tab } = useLocalSearchParams<{ tab?: 'notifications' | 'tips' }>();
   const [activeTab, setActiveTab] = useState<'notifications' | 'tips'>('notifications');
+  const [selectedNotification, setSelectedNotification] = useState<any>(null);
+
+  useEffect(() => {
+    if (tab === 'notifications' || tab === 'tips') {
+      setActiveTab(tab);
+    }
+  }, [tab]);
+
+  const handleNotificationPress = (n: any) => {
+    markAsRead(n.id);
+    setSelectedNotification(n);
+  };
 
   return (
     <SafeAreaView style={s.container}>
@@ -38,7 +52,7 @@ export default function AlertsScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.scroll}>
         {activeTab === 'notifications' ? (
           notifications.length > 0 ? notifications.map((n) => (
-            <TouchableOpacity key={n.id} onPress={() => markAsRead(n.id)} activeOpacity={0.8}>
+            <TouchableOpacity key={n.id} onPress={() => handleNotificationPress(n)} activeOpacity={0.8}>
               <Card style={[s.nCard, !n.read ? s.nCardUnread : undefined]} padding="md">
                 <View style={s.nRow}>
                   <View style={[s.nIcon, { backgroundColor: n.read ? colors.surfaceContainerHigh : colors.primaryFixed + '40' }]}>
@@ -66,6 +80,39 @@ export default function AlertsScreen() {
           ))
         )}
       </ScrollView>
+
+      {/* Elegant Notification Details Modal */}
+      <Modal
+        visible={!!selectedNotification}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedNotification(null)}
+      >
+        <View style={s.modalOverlay}>
+          <View style={s.modalContainer}>
+            <View style={s.modalHeader}>
+              <View style={s.modalIconContainer}>
+                <Bell size={24} color={colors.primary} />
+              </View>
+              <Text style={s.modalTitle}>{selectedNotification?.title}</Text>
+            </View>
+            <ScrollView style={s.modalContent} showsVerticalScrollIndicator={false}>
+              <Text style={s.modalMsg}>{selectedNotification?.message}</Text>
+              <Text style={s.modalTime}>
+                Enviado em:{' '}
+                {selectedNotification &&
+                  new Date(selectedNotification.createdAt).toLocaleDateString('pt-BR')}
+              </Text>
+            </ScrollView>
+            <TouchableOpacity
+              style={s.modalBtn}
+              onPress={() => setSelectedNotification(null)}
+            >
+              <Text style={s.modalBtnTxt}>Entendido</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -99,4 +146,78 @@ const s = StyleSheet.create({
   tipCatTxt: { fontFamily: fonts.label, fontSize: fontSizes.labelSm, color: colors.primary, fontWeight: '600' },
   tipTitle: { fontFamily: fonts.headline, fontSize: fontSizes.titleMd, fontWeight: '600', color: colors.onSurface, marginBottom: 4 },
   tipDesc: { fontFamily: fonts.body, fontSize: fontSizes.bodyMd, color: colors.onSurfaceVariant, lineHeight: 22 },
+  
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  modalContainer: {
+    width: '100%',
+    maxHeight: '80%',
+    backgroundColor: colors.background,
+    borderRadius: 24,
+    padding: spacing.lg,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    gap: 8,
+  },
+  modalIconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.primaryFixed + '40',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalTitle: {
+    fontFamily: fonts.headline,
+    fontSize: fontSizes.titleMd,
+    fontWeight: '700',
+    color: colors.onSurface,
+    textAlign: 'center',
+  },
+  modalContent: {
+    width: '100%',
+    marginBottom: spacing.lg,
+  },
+  modalMsg: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.bodyMd,
+    color: colors.onSurfaceVariant,
+    lineHeight: 24,
+    textAlign: 'center',
+  },
+  modalTime: {
+    fontFamily: fonts.label,
+    fontSize: fontSizes.labelSm,
+    color: colors.outline,
+    textAlign: 'center',
+    marginTop: spacing.md,
+  },
+  modalBtn: {
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 36,
+    borderRadius: 20,
+    width: '100%',
+    alignItems: 'center',
+  },
+  modalBtnTxt: {
+    fontFamily: fonts.label,
+    fontSize: fontSizes.labelMd,
+    color: colors.onPrimary,
+    fontWeight: '600',
+  },
 });

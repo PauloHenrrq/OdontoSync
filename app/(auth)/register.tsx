@@ -25,15 +25,20 @@ import { colors, fonts, fontSizes, spacing } from '@/src/styles/tokens';
 
 import { Alert as RNAlert } from 'react-native';
 
+const maskPhone = (val: string) => {
+  let v = val.replace(/\D/g, '');
+  if (v.length > 11) v = v.slice(0, 11);
+  if (v.length === 0) return '';
+  if (v.length <= 2) return `(${v}`;
+  if (v.length <= 6) return `(${v.slice(0, 2)}) ${v.slice(2)}`;
+  if (v.length <= 10) return `(${v.slice(0, 2)}) ${v.slice(2, 6)}-${v.slice(6)}`;
+  return `(${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7)}`;
+};
+
 export default function RegisterScreen() {
   const router = useRouter();
-  const { register: registerUser, sendOtp, isLoading, error, clearError } = useAuthStore();
+  const { sendOtp, isLoading, error, clearError } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
-
-  // Estados de verificação OTP
-  const [isOtpSent, setIsOtpSent] = useState(false);
-  const [otpCode, setOtpCode] = useState('');
-  const [tempOtpCode, setTempOtpCode] = useState<string | null>(null);
 
   const {
     control,
@@ -50,37 +55,32 @@ export default function RegisterScreen() {
     },
   });
 
+  const onInvalid = (formErrors: any) => {
+    const firstErrorField = Object.keys(formErrors)[0];
+    if (firstErrorField) {
+      const errorMsg = formErrors[firstErrorField]?.message || 'Verifique os campos digitados.';
+      RNAlert.alert('Preenchimento Inválido', `${errorMsg}`);
+    }
+  };
+
   const onSubmit = async (data: RegisterFormData) => {
     clearError();
+    const cleanPhone = data.phone.replace(/\D/g, '');
+    const response = await sendOtp(cleanPhone);
 
-    // Se o código OTP ainda não foi enviado, solicita primeiro
-    if (!isOtpSent) {
-      const cleanPhone = data.phone.replace(/\D/g, '');
-      const response = await sendOtp(cleanPhone);
-      if (response.success) {
-        setIsOtpSent(true);
-        if (response.devCode) {
-          setTempOtpCode(response.devCode);
+    if (response.success) {
+      router.push({
+        pathname: '/(auth)/verify-otp',
+        params: {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          password: data.password,
+          tempOtpCode: response.devCode || '',
         }
-        RNAlert.alert(
-          'Código Enviado',
-          'Enviamos um código de confirmação de 6 dígitos para o seu WhatsApp cadastrado!'
-        );
-      } else {
-        RNAlert.alert('Erro', response.error || 'Não foi possível enviar o código de verificação.');
-      }
-      return;
-    }
-
-    if (otpCode.length !== 6) {
-      RNAlert.alert('Atenção', 'Por favor, digite o código de 6 dígitos recebido.');
-      return;
-    }
-
-    // Com o código enviado, realiza o registro completo
-    const success = await registerUser(data.name, data.email, data.phone, data.password, otpCode);
-    if (success) {
-      // O redirecionamento é feito automaticamente pelo useProtectedRoute
+      });
+    } else {
+      RNAlert.alert('Erro', response.error || 'Não foi possível enviar o código de verificação.');
     }
   };
 
@@ -136,7 +136,7 @@ export default function RegisterScreen() {
                 label="Telefone"
                 placeholder="(11) 99999-9999"
                 value={value}
-                onChangeText={onChange}
+                onChangeText={(text) => onChange(maskPhone(text))}
                 keyboardType="phone-pad"
                 error={errors.phone?.message}
                 leftIcon={<Phone size={20} color={colors.outline} />}
@@ -199,27 +199,11 @@ export default function RegisterScreen() {
             )}
           />
 
-          {isOtpSent && (
-            <View style={{ marginBottom: 16 }}>
-              <Input
-                label="Código de Verificação WhatsApp"
-                placeholder="Digite o código de 6 dígitos"
-                value={otpCode}
-                onChangeText={setOtpCode}
-                keyboardType="number-pad"
-                maxLength={6}
-              />
-              <Text style={styles.helperText}>
-                {tempOtpCode ? `Ambiente de Teste: Use o código ${tempOtpCode}` : 'Código enviado via WhatsApp'}
-              </Text>
-            </View>
-          )}
-
-          {error && <Text style={styles.errorMessage}>{error}</Text>}
+          {!!error ? <Text style={styles.errorMessage}>{error}</Text> : null}
 
           <Button
-            title={isOtpSent ? "Confirmar e Criar Conta" : "Enviar Código WhatsApp"}
-            onPress={handleSubmit(onSubmit)}
+            title="Entrar"
+            onPress={handleSubmit(onSubmit, onInvalid)}
             loading={isLoading}
             fullWidth
             size="lg"
@@ -305,8 +289,62 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: fontSizes.bodySm,
     color: colors.primary,
-    marginTop: 4,
-    marginLeft: 4,
+    marginTop: 8,
+    textAlign: 'center',
     fontWeight: '500',
+  },
+  otpLabel: {
+    fontFamily: fonts.label,
+    fontSize: fontSizes.labelMd,
+    color: colors.onSurfaceVariant,
+    marginBottom: 12,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  otpRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 12,
+    paddingHorizontal: 4,
+  },
+  otpBox: {
+    width: 44,
+    height: 54,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceContainerLow,
+    borderWidth: 1.5,
+    borderColor: colors.outlineVariant,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  otpBoxFocused: {
+    borderColor: colors.primary,
+    backgroundColor: colors.surfaceContainer,
+    borderWidth: 2,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  otpBoxFilled: {
+    borderColor: colors.primary + '80',
+    backgroundColor: colors.surfaceContainerLowest,
+  },
+  otpDigit: {
+    fontFamily: fonts.headline,
+    fontSize: 22,
+    fontWeight: '700',
+    color: colors.outline,
+  },
+  otpDigitFilled: {
+    color: colors.primary,
+  },
+  hiddenInput: {
+    position: 'absolute',
+    width: 1,
+    height: 1,
+    opacity: 0,
   },
 });

@@ -4,6 +4,15 @@
 // Carrega fontes Manrope + Inter do Design System.
 // ============================================================
 
+// Desabilitar console logs fora do ambiente de desenvolvimento (__DEV__)
+if (typeof __DEV__ !== 'undefined' ? !__DEV__ : process.env.NODE_ENV === 'production') {
+  console.log = () => {};
+  console.error = () => {};
+  console.warn = () => {};
+  console.info = () => {};
+  console.debug = () => {};
+}
+
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -14,6 +23,7 @@ import { useAuthStore } from '@/src/stores/authStore';
 import { useAppointmentStore } from '@/src/stores/appointmentStore';
 import { useClinicStore } from '@/src/stores/clinicStore';
 import { UserRole } from '@/src/types';
+import { registerForPushNotificationsAsync } from '@/src/services/notificationService';
 
 import 'react-native-reanimated';
 
@@ -29,19 +39,20 @@ function useProtectedRoute() {
   const router = useRouter();
 
   useEffect(() => {
-    const inAuthGroup = segments[0] === '(auth)';
-    const inClientGroup = segments[0] === '(client)';
-    const inAdminGroup = segments[0] === '(admin)';
+    const inAuthGroup = (segments as string[]).includes('(auth)');
+    const inClientGroup = (segments as string[]).includes('(client)');
+    const inAdminGroup = (segments as string[]).includes('(admin)');
 
     if (!isAuthenticated && !inAuthGroup) {
-      // Não autenticado → redireciona para login
       router.replace('/(auth)/login');
     } else if (isAuthenticated) {
-      // Autenticado, carrega dados e navega
       fetchAppointments();
-      fetchConfig();
-      fetchPatients();
       fetchServices();
+      
+      if (user?.role === UserRole.ADMIN) {
+        fetchPatients();
+        fetchConfig();
+      }
       
       if (inAuthGroup) {
         if (user?.role === UserRole.ADMIN) {
@@ -72,6 +83,9 @@ export default function RootLayout() {
   useEffect(() => {
     if (manropeLoaded && interLoaded) {
       SplashScreen.hideAsync();
+      registerForPushNotificationsAsync().catch((err) => {
+        console.log('Falha segura ao inicializar canais de notificações:', err);
+      });
     }
   }, [manropeLoaded, interLoaded]);
 
