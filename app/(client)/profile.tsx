@@ -31,16 +31,22 @@ import {
   Lock,
   MessageCircle,
   FileText,
+  Eye,
+  EyeOff,
+  KeyRound,
 } from 'lucide-react-native';
 import { Card } from '@/src/components/ui/Card';
 import { Avatar } from '@/src/components/ui/Avatar';
 import { Alert } from '@/src/components/ui/Alert';
+import { Input } from '@/src/components/ui/Input';
+import { Button } from '@/src/components/ui/Button';
+import { api } from '@/src/services/api';
 import { useAuthStore } from '@/src/stores/authStore';
 import { useAppointmentStore } from '@/src/stores/appointmentStore';
 import { useClinicStore } from '@/src/stores/clinicStore';
 import { colors, fonts, fontSizes, spacing } from '@/src/styles/tokens';
 
-type ModalType = 'personal' | 'privacy' | 'settings' | 'help' | null;
+type ModalType = 'personal' | 'privacy' | 'settings' | 'help' | 'changePassword' | null;
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -50,6 +56,71 @@ export default function ProfileScreen() {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [pushEnabled, setPushEnabled] = useState(true);
   const [reminderEnabled, setReminderEnabled] = useState(true);
+
+  // Estados do Modal Alterar Senha
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+
+  const [currentPasswordError, setCurrentPasswordError] = useState('');
+  const [newPasswordError, setNewPasswordError] = useState('');
+  const [confirmNewPasswordError, setConfirmNewPasswordError] = useState('');
+
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showCurrentPass, setShowCurrentPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmNewPass, setShowConfirmNewPass] = useState(false);
+
+  const closeModal = () => {
+    setActiveModal(null);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmNewPassword('');
+    setCurrentPasswordError('');
+    setNewPasswordError('');
+    setConfirmNewPasswordError('');
+  };
+
+  const handleChangePassword = async () => {
+    setCurrentPasswordError('');
+    setNewPasswordError('');
+    setConfirmNewPasswordError('');
+
+    let hasError = false;
+
+    if (!currentPassword) {
+      setCurrentPasswordError('A senha atual é obrigatória');
+      hasError = true;
+    }
+    if (newPassword.length < 6) {
+      setNewPasswordError('A nova senha deve ter pelo menos 6 caracteres');
+      hasError = true;
+    }
+    if (!confirmNewPassword) {
+      setConfirmNewPasswordError('Confirme sua nova senha');
+      hasError = true;
+    } else if (newPassword !== confirmNewPassword) {
+      setConfirmNewPasswordError('As novas senhas não coincidem');
+      hasError = true;
+    }
+
+    if (hasError) return;
+
+    setIsChangingPassword(true);
+    try {
+      await api.post('/auth/change-password', {
+        currentPassword,
+        newPassword,
+      });
+
+      Alert.alert('Sucesso', 'Sua senha foi alterada com sucesso! Um e-mail de notificação de segurança foi enviado para a sua caixa de entrada.');
+      closeModal();
+    } catch (err: any) {
+      setCurrentPasswordError(err.message || 'Erro ao alterar a senha. Verifique se a senha atual está correta.');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -228,6 +299,14 @@ export default function ProfileScreen() {
               <Text style={m.sectionDesc}>
                 Sua conta está protegida com autenticação via e-mail e senha criptografada. Seus dados são armazenados em servidores seguros com criptografia end-to-end.
               </Text>
+              <TouchableOpacity
+                style={m.changePasswordInlineBtn}
+                onPress={() => setActiveModal('changePassword')}
+                activeOpacity={0.7}
+              >
+                <Lock size={16} color={colors.primary} />
+                <Text style={m.changePasswordInlineTxt}>Alterar Senha de Acesso</Text>
+              </TouchableOpacity>
             </View>
             <View style={m.sectionCard}>
               <View style={m.sectionIcon}>
@@ -246,6 +325,82 @@ export default function ProfileScreen() {
               <Text style={m.sectionDesc}>
                 Conforme a Lei Geral de Proteção de Dados, você pode solicitar acesso, correção ou exclusão dos seus dados pessoais a qualquer momento entrando em contato com a clínica.
               </Text>
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
+
+      {/* ══════════ MODAL: Alterar Senha ══════════ */}
+      <Modal visible={activeModal === 'changePassword'} transparent animationType="slide" onRequestClose={closeModal}>
+        <TouchableWithoutFeedback onPress={() => setActiveModal('privacy')}><View style={m.overlay} /></TouchableWithoutFeedback>
+        <View style={[m.sheet, { height: '75%' }]}>
+          <View style={m.modalHeader}>
+            <Text style={m.modalTitle}>Alterar Senha</Text>
+            <TouchableOpacity onPress={() => setActiveModal('privacy')} style={m.closeBtn}>
+              <X size={20} color={colors.outline} />
+            </TouchableOpacity>
+          </View>
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <Text style={m.modalDesc}>
+              Para sua segurança, digite a sua senha atual antes de cadastrar uma nova combinação.
+            </Text>
+
+            <Input
+              label="Senha Atual"
+              placeholder="Digite sua senha atual"
+              value={currentPassword}
+              onChangeText={(txt) => {
+                setCurrentPassword(txt);
+                if (currentPasswordError) setCurrentPasswordError('');
+              }}
+              secureTextEntry={!showCurrentPass}
+              autoCapitalize="none"
+              error={currentPasswordError}
+              leftIcon={<Lock size={18} color={colors.outline} />}
+              rightIcon={showCurrentPass ? <EyeOff size={18} color={colors.outline} /> : <Eye size={18} color={colors.outline} />}
+              onRightIconPress={() => setShowCurrentPass(!showCurrentPass)}
+            />
+
+            <Input
+              label="Nova Senha"
+              placeholder="Mínimo de 6 caracteres"
+              value={newPassword}
+              onChangeText={(txt) => {
+                setNewPassword(txt);
+                if (newPasswordError) setNewPasswordError('');
+              }}
+              secureTextEntry={!showNewPass}
+              autoCapitalize="none"
+              error={newPasswordError}
+              leftIcon={<Lock size={18} color={colors.outline} />}
+              rightIcon={showNewPass ? <EyeOff size={18} color={colors.outline} /> : <Eye size={18} color={colors.outline} />}
+              onRightIconPress={() => setShowNewPass(!showNewPass)}
+            />
+
+            <Input
+              label="Confirmar Nova Senha"
+              placeholder="Confirme a nova senha"
+              value={confirmNewPassword}
+              onChangeText={(txt) => {
+                setConfirmNewPassword(txt);
+                if (confirmNewPasswordError) setConfirmNewPasswordError('');
+              }}
+              secureTextEntry={!showConfirmNewPass}
+              autoCapitalize="none"
+              error={confirmNewPasswordError}
+              leftIcon={<KeyRound size={18} color={colors.outline} />}
+              rightIcon={showConfirmNewPass ? <EyeOff size={18} color={colors.outline} /> : <Eye size={18} color={colors.outline} />}
+              onRightIconPress={() => setShowConfirmNewPass(!showConfirmNewPass)}
+            />
+
+            <View style={{ marginTop: spacing.md }}>
+              <Button
+                title="Salvar Nova Senha"
+                onPress={handleChangePassword}
+                loading={isChangingPassword}
+                fullWidth
+                size="lg"
+              />
             </View>
           </ScrollView>
         </View>
@@ -436,4 +591,32 @@ const m = StyleSheet.create({
   },
   faqQ: { fontFamily: fonts.headline, fontSize: fontSizes.titleSm, fontWeight: '600', color: colors.onSurface, marginBottom: 4 },
   faqA: { fontFamily: fonts.body, fontSize: fontSizes.bodyMd, color: colors.onSurfaceVariant, lineHeight: 22 },
+  changePasswordInlineBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.primary + '15',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginTop: spacing.md,
+    alignSelf: 'flex-start',
+  },
+  changePasswordInlineTxt: {
+    fontFamily: fonts.label,
+    fontSize: fontSizes.labelMd,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.outlineVariant + '40',
+    marginBottom: spacing.md,
+  },
+  modalTitle: { fontFamily: fonts.headline, fontSize: fontSizes.titleLg, fontWeight: '600', color: colors.onSurface },
+  modalDesc: { fontFamily: fonts.body, fontSize: fontSizes.bodyMd, color: colors.onSurfaceVariant, lineHeight: 22, marginBottom: spacing.md },
 });

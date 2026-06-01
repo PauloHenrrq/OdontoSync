@@ -445,6 +445,11 @@
     - Criado o armazenamento temporário de OTP em memória cache seguro: `const forgotOtpStore = new Map<string, { code: string; expiresAt: number }>()` com tempo de expiração estrito de 10 minutos (em conformidade com a regra de risco que impede migrações e modificações em tabelas do Neon DB sem consentimento).
     - Refatorados os endpoints `/auth/verify-email` e `/auth/reset-password` no backend para utilizarem a geração do OTP e o envio real do e-mail. Criado o novo endpoint `/auth/verify-code` para pré-validação do código digitado antes do envio final. Foi injetado o código mestre `'123456'` como fallback flexível em ambientes locais.
     - Atualizados os handlers da tela de recuperação de senha do aplicativo (`Frontend/app/(auth)/forgot-password.tsx`) para fazerem as chamadas físicas de API (`/auth/verify-email`, `/auth/verify-code` e `/auth/reset-password`) substituindo os timeouts simulados e integrando as etapas em um fluxo síncrono completo.
+  - **Fluxo Autenticado de Alteração de Senha (Change Password):**
+    - Criado o endpoint seguro `POST /auth/change-password` no backend protegendo com a validação JWT `preHandler: [app.authenticate]`. O endpoint valida se a senha atual confere antes de hashear e aplicar a nova senha de 6+ caracteres no banco.
+    - Implementada a notificação automática de alteração de senha: ao alterar com sucesso, o sistema renderiza o modelo de e-mail de alta fidelidade `getPasswordChangedNotificationTemplate` com aviso de segurança e dispara para a caixa de e-mail do usuário logado via Nodemailer.
+    - Acoplado o botão premium de ação rápida **"Alterar Senha de Acesso"** na seção "Proteção da Conta" no modal de Privacidade e Segurança do perfil do paciente (`Frontend/app/(client)/profile.tsx`).
+    - Criado o modal interativo com máscara visual de exibição de senha para preenchimento da senha antiga, nova senha e confirmação, conectado à chamada de API física.
   - **Testes Automatizados com Vitest:**
     - Instalada a biblioteca `vitest` como devDependency em ambos os subdiretórios `Backend` e `Frontend`.
     - Configurados os arquivos `vitest.config.ts` em ambas as pastas, configurando aliases de caminhos (`@/*`) para bater com a orquestração do compilador TypeScript.
@@ -457,3 +462,4 @@
     - Adicionada a ramificação `developer` ao lado de `main` nos gatilhos de `push` e `pull_request`.
     - Injetada a instrução de execução dos testes automatizados (`npm run test`) em ambos os jobs (`validate-frontend` e `validate-backend`), forçando testes contínuos a cada validação e bloqueando deploys em caso de quebras de regras de negócio.
 - **Próximo Passo:** Prosseguir com o push das modificações para o repositório remoto.
+
