@@ -21,9 +21,9 @@ export interface ClinicState {
 
 export interface ClinicActions {
   // Fetch actions (API)
-  fetchConfig: () => Promise<void>;
-  fetchPatients: () => Promise<void>;
-  fetchServices: () => Promise<void>;
+  fetchConfig: (force?: boolean) => Promise<void>;
+  fetchPatients: (force?: boolean) => Promise<void>;
+  fetchServices: (force?: boolean) => Promise<void>;
 
   // Admin actions
   updateConfig: (partial: Partial<ClinicConfig>) => void;
@@ -54,7 +54,11 @@ export const useClinicStore = create<ClinicStore>()(
     isLoading: false,
 
     // Actions
-    fetchConfig: async () => {
+    fetchConfig: async (force = false) => {
+      // Se não for carregamento forçado e já possuir config carregada (id preenchido), economiza rede
+      if (!force && get().config.id) {
+        return;
+      }
       try {
         const config = await ClinicService.getConfig();
         if (config) {
@@ -65,7 +69,11 @@ export const useClinicStore = create<ClinicStore>()(
       }
     },
 
-    fetchPatients: async () => {
+    fetchPatients: async (force = false) => {
+      // Se não for carregamento forçado e já possuir pacientes locais, economiza rede
+      if (!force && get().patients.length > 0) {
+        return;
+      }
       try {
         const patients = await ClinicService.getPatients();
         set({ patients });
@@ -74,7 +82,11 @@ export const useClinicStore = create<ClinicStore>()(
       }
     },
 
-    fetchServices: async () => {
+    fetchServices: async (force = false) => {
+      // Se não for carregamento forçado e já possuir serviços locais, economiza rede
+      if (!force && get().services.length > 0) {
+        return;
+      }
       try {
         const services = await ClinicService.getServices();
         set({ services });
