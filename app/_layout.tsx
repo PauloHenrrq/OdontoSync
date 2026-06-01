@@ -38,14 +38,24 @@ function useProtectedRoute() {
   const segments = useSegments();
   const router = useRouter();
 
+  // 1. Controle de Segurança de Rotas (RBAC) — Roda em cada mudança de rota
   useEffect(() => {
     const inAuthGroup = (segments as string[]).includes('(auth)');
-    const inClientGroup = (segments as string[]).includes('(client)');
-    const inAdminGroup = (segments as string[]).includes('(admin)');
 
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/(auth)/login');
-    } else if (isAuthenticated) {
+    } else if (isAuthenticated && inAuthGroup) {
+      if (user?.role === UserRole.ADMIN) {
+        router.replace('/(admin)');
+      } else {
+        router.replace('/(client)');
+      }
+    }
+  }, [isAuthenticated, segments, user]);
+
+  // 2. Sincronização Inicial de Dados — Executado apenas na autenticação, NUNCA na navegação
+  useEffect(() => {
+    if (isAuthenticated) {
       fetchAppointments();
       fetchServices();
       
@@ -53,16 +63,8 @@ function useProtectedRoute() {
         fetchPatients();
         fetchConfig();
       }
-      
-      if (inAuthGroup) {
-        if (user?.role === UserRole.ADMIN) {
-          router.replace('/(admin)');
-        } else {
-          router.replace('/(client)');
-        }
-      }
     }
-  }, [isAuthenticated, segments, user]);
+  }, [isAuthenticated, user?.role]);
 }
 
 export default function RootLayout() {

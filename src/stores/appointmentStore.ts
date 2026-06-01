@@ -19,7 +19,7 @@ export interface AppointmentState {
 
 export interface AppointmentActions {
   // Load actions
-  fetchAppointments: () => Promise<void>;
+  fetchAppointments: (force?: boolean) => Promise<void>;
 
   // Patient actions
   getMyAppointments: (userId: string) => Appointment[];
@@ -41,7 +41,12 @@ export const useAppointmentStore = create<AppointmentStore>()(
     isLoading: false,
 
     // Actions
-    fetchAppointments: async () => {
+    fetchAppointments: async (force = false) => {
+      // Se não for carregamento forçado e já possuir dados locais, economiza requisição de rede
+      if (!force && get().appointments.length > 0) {
+        return;
+      }
+
       set({ isLoading: true });
       try {
         const rawAppointments = await AppointmentService.getAll();
