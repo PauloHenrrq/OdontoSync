@@ -240,10 +240,6 @@ export default function ForgotPasswordScreen() {
               leftIcon={<ShieldCheck size={20} color={colors.outline} />}
             />
 
-            <Text style={styles.helperText}>
-              Dica de teste: Digite 123456 para validar
-            </Text>
-
             <View style={styles.resendContainer}>
               <Text style={styles.resendTxt}>Não recebeu o código?</Text>
               <TouchableOpacity onPress={handleResendCode} disabled={timer > 0}>
