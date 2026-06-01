@@ -158,7 +158,7 @@ export default function SettingsScreen() {
           <View style={s.settingRow}>
             <View style={s.settingLeft}>
               <View style={s.settingIcon}><Bell size={18} color={colors.primary} /></View>
-              <View><Text style={s.settingLabel}>Redução de Faltas</Text><Text style={s.settingSub}>Lembretes automáticos antes da consulta</Text></View>
+              <View style={{ flex: 1 }}><Text style={s.settingLabel}>Redução de Faltas</Text><Text style={s.settingSub}>Lembretes automáticos antes da consulta</Text></View>
             </View>
             <Switch value={absenceReduction} onValueChange={toggleNoShow} trackColor={{ false: colors.surfaceContainerHigh, true: colors.primaryFixed }} thumbColor={absenceReduction ? colors.primary : colors.outline} />
           </View>
@@ -166,7 +166,7 @@ export default function SettingsScreen() {
           <TouchableOpacity style={s.settingRow} onPress={openReminderModal} activeOpacity={0.7}>
             <View style={s.settingLeft}>
               <View style={s.settingIcon}><Clock size={18} color={colors.primary} /></View>
-              <View><Text style={s.settingLabel}>Alerta para a Recepção</Text><Text style={s.settingSub}>{formatReminderHoursText(config.reminderHoursBefore)}</Text></View>
+              <View style={{ flex: 1 }}><Text style={s.settingLabel}>Alerta para a Recepção</Text><Text style={s.settingSub}>{formatReminderHoursText(config.reminderHoursBefore)}</Text></View>
             </View>
             <ChevronRight size={18} color={colors.outline} />
           </TouchableOpacity>

@@ -37,9 +37,7 @@ export const registerSchema = z
       ),
     password: z
       .string()
-      .min(6, 'Senha deve ter pelo menos 6 caracteres')
-      .regex(/[A-Z]/, 'Senha deve conter pelo menos uma letra maiúscula')
-      .regex(/[0-9]/, 'Senha deve conter pelo menos um número'),
+      .min(6, 'Senha deve ter pelo menos 6 caracteres'),
     confirmPassword: z.string().min(1, 'Confirme sua senha'),
     code: z.string().optional(),
   })

@@ -62,7 +62,7 @@ export function Input({
           </TouchableOpacity>
         )}
       </View>
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {!!error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
   );
 }
@@ -108,6 +108,7 @@ const styles = StyleSheet.create({
   iconRight: {
     marginLeft: 12,
     padding: 4,
+    marginRight: 5,
   },
   errorText: {
     fontFamily: fonts.body,

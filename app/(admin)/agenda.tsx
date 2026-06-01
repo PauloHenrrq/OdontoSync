@@ -66,7 +66,7 @@ const getMonthDaysGrid = (monthDate: Date): (Date | null)[] => {
 // Cores institucionais para acompanhar os status nos cartões
 const statusColors: Record<AppointmentStatus, string> = {
   [AppointmentStatus.PENDING]: '#2E7D32', // Verde Agendado
-  [AppointmentStatus.CONFIRMED]: colors.primary, // Verde teal principal
+  [AppointmentStatus.CONFIRMED]: '#2E7D32', // Verde Agendado (Auto-confirmado)
   [AppointmentStatus.COMPLETED]: '#2E7D32', // Verde conclusão
   [AppointmentStatus.CANCELLED]: colors.error, // Vermelho erro
   [AppointmentStatus.ABSENT]: '#C62828', // Vermelho escuro (Falta)
@@ -127,23 +127,65 @@ export default function AgendaScreen() {
   const [selectedAptForContact, setSelectedAptForContact] = useState<any>(null);
   const [selectedTemplateType, setSelectedTemplateType] = useState<'confirmation' | 'cancellation'>('confirmation');
   const [editedMessageText, setEditedMessageText] = useState('');
+  const [isRefAptsExpanded, setIsRefAptsExpanded] = useState(false);
+
+  // Agendamentos do paciente selecionado (ordenados do mais recente para o mais antigo)
+  const patientHistory = selectedPatientForContact
+    ? appointments.filter(a => a.userId === selectedPatientForContact.id).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    : [];
+
+  useEffect(() => {
+    if (selectedPatientForContact && selectedTemplateType) {
+      const template = selectedTemplateType === 'confirmation' 
+        ? config.confirmationTemplate || 'Olá [NOME], confirmamos sua consulta em [DATA] às [HORA].'
+        : config.cancellationTemplate || 'Olá [NOME], lamentamos, mas sua consulta em [DATA] às [HORA] foi cancelada.';
+      
+      const formatted = formatTemplate(
+        template,
+        selectedPatientForContact.name,
+        selectedAptForContact?.date,
+        selectedAptForContact?.time
+      );
+      setEditedMessageText(formatted);
+    }
+  }, [selectedTemplateType, selectedAptForContact, selectedPatientForContact, config]);
   // IDs de agendamentos cujo lembrete já foi tratado pela recepcionista nesta sessão
   const [dismissedReminderIds, setDismissedReminderIds] = useState<Set<string>>(new Set());
 
-  const getTomorrowStr = (): string => {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    return formatDateStr(d);
+  const getDaysDifference = (aptDateStr: string): number => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const aptDate = new Date(aptDateStr + 'T12:00:00');
+    aptDate.setHours(0, 0, 0, 0);
+    const diffTime = aptDate.getTime() - today.getTime();
+    return Math.round(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  const tomorrowStr = getTomorrowStr();
-  // Exclui agendamentos já tratados (lembrete enviado) do cômputo do sininho e banner
-  const tomorrowApts = appointments.filter(
-    (a) => a.date === tomorrowStr &&
-           (a.status === AppointmentStatus.PENDING || a.status === AppointmentStatus.CONFIRMED) &&
-           !dismissedReminderIds.has(a.id)
-  );
-  const pendingRemindersCount = tomorrowApts.length;
+  // Parser de horas selecionadas para dias antes da consulta
+  const activeReminderDays = (() => {
+    const hoursStr = config.reminderHoursBefore;
+    if (!hoursStr) return [1]; // padrão de fallback é 1 dia (amanhã)
+    return hoursStr
+      .split(',')
+      .map((h) => parseInt(h.trim(), 10))
+      .filter((h) => !isNaN(h) && h > 0)
+      .map((h) => Math.max(1, Math.round(h / 24))) // Garante no mínimo 1 dia para ser lembrete antecipado
+      .filter((v, i, self) => self.indexOf(v) === i); // remove duplicatas
+  })();
+
+  // Filtra agendamentos nos períodos configurados que ainda não foram dispensados
+  const pendingReminders = appointments.filter((a) => {
+    if (a.status !== AppointmentStatus.PENDING && a.status !== AppointmentStatus.CONFIRMED) {
+      return false;
+    }
+    if (dismissedReminderIds.has(a.id)) {
+      return false;
+    }
+    const diffDays = getDaysDifference(a.date);
+    return activeReminderDays.includes(diffDays);
+  });
+
+  const pendingRemindersCount = pendingReminders.length;
 
   const formatTemplate = (template: string, patientName: string, aptDate?: string, aptTime?: string) => {
     let msg = template;
@@ -212,11 +254,23 @@ export default function AgendaScreen() {
 
   useEffect(() => {
     if (params.openNew === 'true') {
+      const phone = params.phone ? String(params.phone) : '';
+      const name = params.name ? String(params.name) : '';
+      
+      setNewApt({
+        phone: maskPhone(phone),
+        name: name,
+        dentist: 'Dr. Paulo',
+        serviceId: '',
+        date: '',
+        time: ''
+      });
+      
       setIsNewAptModalVisible(true);
       // Limpa os params para evitar que abra de novo em re-renders acidentais
-      router.setParams({ openNew: '' });
+      router.setParams({ openNew: '', phone: '', name: '' });
     }
-  }, [params.openNew]);
+  }, [params.openNew, params.phone, params.name]);
 
   const dates = get5Days(centerDate);
   const dayApts = appointments.filter((a) => a.date === selectedDate).sort((a, b) => a.time.localeCompare(b.time));
@@ -282,7 +336,7 @@ export default function AgendaScreen() {
 
       {/* Seletor Horizontal de 5 dias em torno da data central */}
       <View style={{ marginBottom: spacing.xs }}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.dateRow}>
+        <View style={s.dateRow}>
           {dates.map((d) => {
             const dt = new Date(d + 'T12:00:00');
             const isActive = d === selectedDate;
@@ -297,7 +351,7 @@ export default function AgendaScreen() {
               </TouchableOpacity>
             );
           })}
-        </ScrollView>
+        </View>
       </View>
 
       {/* Ver Calendário posicionado na esquerda em baixo das datas atuais */}
@@ -325,7 +379,7 @@ export default function AgendaScreen() {
           <AlertTriangle size={20} color="#E65100" />
           <View style={{ flex: 1 }}>
             <Text style={s.smartBannerTitle}>Ações Requeridas Hoje</Text>
-            <Text style={s.smartBannerSub}>Você possui {pendingRemindersCount} {pendingRemindersCount === 1 ? 'lembrete pendente' : 'lembretes pendentes'} para amanhã.</Text>
+            <Text style={s.smartBannerSub}>Você possui {pendingRemindersCount} {pendingRemindersCount === 1 ? 'lembrete pendente' : 'lembretes pendentes'} nos períodos configurados.</Text>
           </View>
           <ChevronRight size={18} color="#E65100" />
         </TouchableOpacity>
@@ -338,7 +392,7 @@ export default function AgendaScreen() {
           <Check size={20} color="#2E7D32" />
           <View style={{ flex: 1 }}>
             <Text style={s.smartBannerSuccessTitle}>Tudo sob Controle!</Text>
-            <Text style={s.smartBannerSuccessSub}>Todos os lembretes de amanhã já foram enviados ou estão em dia.</Text>
+            <Text style={s.smartBannerSuccessSub}>Todos os lembretes nos prazos configurados já foram enviados ou estão em dia.</Text>
           </View>
           <ChevronRight size={18} color="#2E7D32" />
         </TouchableOpacity>
@@ -372,23 +426,10 @@ export default function AgendaScreen() {
               {apt.notes && <Text style={s.aptNotes}>📋 {apt.notes}</Text>}
               {!apt.userId && <Text style={s.orphan}>📱 Paciente sem app — WhatsApp</Text>}
 
-              {apt.status === AppointmentStatus.PENDING && (
+              {(apt.status === AppointmentStatus.PENDING || apt.status === AppointmentStatus.CONFIRMED) && (
                 <View style={s.actions}>
-                  <TouchableOpacity style={s.actCancel} onPress={() => handleAction(apt.id, 'cancelar')}>
-                    <X size={16} color={colors.error} /><Text style={s.actTxtR}>Cancelar</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={s.actWarn} onPress={() => handleAction(apt.id, 'marcar falta')}>
-                    <AlertTriangle size={16} color="#E65100" /><Text style={s.actTxtO}>Falta</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-              {apt.status === AppointmentStatus.CONFIRMED && (
-                <View style={s.actions}>
-                  <TouchableOpacity style={s.actConfirm} onPress={() => handleAction(apt.id, 'concluir')}>
-                    <Check size={16} color={colors.onPrimary} /><Text style={s.actTxtW}>Concluir</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={s.actWarn} onPress={() => handleAction(apt.id, 'marcar falta')}>
-                    <AlertTriangle size={16} color="#E65100" /><Text style={s.actTxtO}>Falta</Text>
+                  <TouchableOpacity style={[s.actWarn, { flex: 1 }]} onPress={() => handleAction(apt.id, 'marcar falta')}>
+                    <AlertTriangle size={16} color="#E65100" /><Text style={s.actTxtO}>Marcar Falta</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -767,10 +808,16 @@ export default function AgendaScreen() {
                 </View>
 
                 <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 300 }}>
-                  {tomorrowApts.length > 0 ? (
-                    tomorrowApts.map((apt) => {
+                  {pendingReminders.length > 0 ? (
+                    pendingReminders.map((apt) => {
                       const patient = apt.user ?? (apt.userId ? getPatientByPhone(apt.phone) : undefined);
                       const patientName = patient?.name ?? apt.phone;
+                      const diffDays = getDaysDifference(apt.date);
+                      const labelDias = diffDays === 0 
+                        ? 'hoje' 
+                        : diffDays === 1 
+                        ? 'amanhã' 
+                        : `daqui a ${diffDays} dias`;
                       return (
                         <TouchableOpacity
                           key={apt.id}
@@ -780,11 +827,7 @@ export default function AgendaScreen() {
                             setSelectedPatientForContact(pData);
                             setSelectedAptForContact(apt);
                             setSelectedTemplateType('confirmation');
-                            
-                            // Formata o template inicial
-                            const rawTemplate = config.confirmationTemplate || 'Olá [NOME], confirmamos sua consulta em [DATA] às [HORA].';
-                            const formatted = formatTemplate(rawTemplate, patientName, apt.date, apt.time);
-                            setEditedMessageText(formatted);
+                            setIsRefAptsExpanded(false);
                             
                             setIsNotificationModalVisible(false);
                             setIsContactModalVisible(true);
@@ -793,14 +836,14 @@ export default function AgendaScreen() {
                           <View style={s.notificationBullet} />
                           <View style={{ flex: 1 }}>
                             <Text style={s.notificationName}>{patientName}</Text>
-                            <Text style={s.notificationSub}>Consulta amanhã às {apt.time}</Text>
+                            <Text style={s.notificationSub}>Consulta {labelDias} às {apt.time}</Text>
                           </View>
                           <ChevronRight size={16} color={colors.primary} />
                         </TouchableOpacity>
                       );
                     })
                   ) : (
-                    <Text style={s.noNotificationsTxt}>Nenhum lembrete pendente para amanhã.</Text>
+                    <Text style={s.noNotificationsTxt}>Nenhum lembrete pendente nos prazos configurados.</Text>
                   )}
                 </ScrollView>
               </View>
@@ -837,14 +880,66 @@ export default function AgendaScreen() {
                   </TouchableOpacity>
                 </View>
 
-                {selectedAptForContact && (
+                {patientHistory.length > 0 && (
                   <View style={{ marginBottom: spacing.md }}>
                     <Text style={s.contactDatesTitle}>Consulta de Referência</Text>
-                    <View style={s.refAptChipActive}>
-                      <Text style={s.refAptChipTxtActive}>
-                        {new Date(selectedAptForContact.date + 'T12:00:00').toLocaleDateString('pt-BR')} às {selectedAptForContact.time}
-                      </Text>
-                    </View>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
+                      {patientHistory.slice(0, 2).map((apt) => {
+                        const isSelected = selectedAptForContact?.id === apt.id;
+                        const formattedDate = new Date(apt.date + 'T12:00:00').toLocaleDateString('pt-BR');
+                        return (
+                          <TouchableOpacity
+                            key={apt.id}
+                            style={[
+                              s.refAptChip,
+                              isSelected && s.refAptChipActive
+                            ]}
+                            onPress={() => setSelectedAptForContact(apt)}
+                          >
+                            <Text style={[s.refAptChipTxt, isSelected && s.refAptChipTxtActive]}>
+                              {formattedDate} às {apt.time}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                      {patientHistory.length > 2 && (
+                        <TouchableOpacity
+                          style={s.refAptPlusChip}
+                          onPress={() => setIsRefAptsExpanded(!isRefAptsExpanded)}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={s.refAptPlusTxt}>
+                            {isRefAptsExpanded ? 'Recolher' : `+${patientHistory.length - 2}`}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </ScrollView>
+
+                    {isRefAptsExpanded && patientHistory.length > 2 && (
+                      <View style={s.expandedListContainer}>
+                        {patientHistory.map((apt) => {
+                          const isSelected = selectedAptForContact?.id === apt.id;
+                          const formattedDate = new Date(apt.date + 'T12:00:00').toLocaleDateString('pt-BR');
+                          return (
+                            <TouchableOpacity
+                              key={apt.id}
+                              style={[s.expandedRow, isSelected && s.expandedRowActive]}
+                              onPress={() => {
+                                setSelectedAptForContact(apt);
+                                setIsRefAptsExpanded(false);
+                              }}
+                            >
+                              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Text style={[s.expandedDateTxt, isSelected && s.expandedDateTxtActive]}>
+                                  {formattedDate} às {apt.time}
+                                </Text>
+                                {isSelected && <Check size={16} color={colors.primary} />}
+                              </View>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    )}
                   </View>
                 )}
 
@@ -962,10 +1057,27 @@ const s = StyleSheet.create({
   listHeaderTitle: { fontFamily: fonts.headline, fontSize: fontSizes.titleLg, fontWeight: '700', color: colors.onSurface },
   scrollContainer: { flex: 1 },
 
-  dateRow: { paddingHorizontal: spacing.lg, gap: 10 },
-  dateChip: { alignItems: 'center', paddingVertical: 12, paddingHorizontal: 18, borderRadius: 16, backgroundColor: colors.surfaceContainer, borderWidth: 1.5, borderColor: colors.surfaceContainerHigh },
+  dateRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    gap: 10,
+    width: '100%',
+  },
+  dateChip: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 58,
+    height: 78,
+    borderRadius: 20,
+    backgroundColor: colors.surfaceContainer,
+    borderWidth: 1.5,
+    borderColor: colors.surfaceContainerHigh,
+  },
   dateChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  dateDay: { fontFamily: fonts.label, fontSize: fontSizes.labelSm, color: colors.onSurfaceVariant, marginBottom: 4 },
+  dateDay: { fontFamily: fonts.label, fontSize: fontSizes.labelSm, color: colors.onSurfaceVariant, marginBottom: 6, marginTop: 2 },
   dateDayActive: { color: colors.onPrimary },
   dateNum: { fontFamily: fonts.headline, fontSize: fontSizes.titleLg, fontWeight: '700', color: colors.onSurface },
   dateNumActive: { color: colors.onPrimary },
@@ -1085,11 +1197,13 @@ const s = StyleSheet.create({
     lineHeight: 18,
   },
   greenDot: {
+    position: 'absolute',
+    bottom: 8,
     width: 6,
     height: 6,
     borderRadius: 3,
     backgroundColor: '#4CAF50',
-    marginTop: 6,
+    alignSelf: 'center',
   },
   greenDotActive: {
     backgroundColor: colors.onPrimary,
@@ -1303,19 +1417,70 @@ const s = StyleSheet.create({
     marginBottom: 8,
     marginTop: 12,
   },
-  refAptChipActive: {
+  refAptChip: {
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: colors.primaryContainer,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    alignSelf: 'flex-start',
+    borderRadius: 12,
+    backgroundColor: colors.surfaceContainerLow,
+    borderWidth: 1.5,
+    borderColor: colors.outlineVariant,
   },
-  refAptChipTxtActive: {
+  refAptChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  refAptChipTxt: {
     fontFamily: fonts.label,
     fontSize: fontSizes.labelSm,
-    color: colors.onPrimaryContainer,
+    color: colors.onSurface,
+    fontWeight: '500',
+  },
+  refAptChipTxtActive: {
+    color: colors.onPrimary,
+    fontWeight: '600',
+  },
+  refAptPlusChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: colors.primaryFixed + '30',
+    borderWidth: 1.5,
+    borderColor: colors.primaryFixedDim,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  refAptPlusTxt: {
+    fontFamily: fonts.label,
+    fontSize: fontSizes.labelSm,
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  expandedListContainer: {
+    backgroundColor: colors.surfaceContainerLow,
+    borderRadius: 12,
+    marginTop: 8,
+    padding: 8,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: colors.surfaceContainerHigh,
+  },
+  expandedRow: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: 'transparent',
+  },
+  expandedRowActive: {
+    backgroundColor: colors.surfaceContainerLowest,
+  },
+  expandedDateTxt: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: fontSizes.bodySm,
+    color: colors.onSurfaceVariant,
+  },
+  expandedDateTxtActive: {
+    fontFamily: fonts.label,
+    color: colors.primary,
     fontWeight: '600',
   },
   msgTemplateTab: {

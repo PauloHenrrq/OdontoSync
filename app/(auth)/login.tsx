@@ -113,7 +113,7 @@ export default function LoginScreen() {
             <Text style={styles.forgotText}>Esqueceu a senha?</Text>
           </TouchableOpacity>
 
-          {error && <Text style={styles.errorMessage}>{error}</Text>}
+          {!!error ? <Text style={styles.errorMessage}>{error}</Text> : null}
 
           <Button
             title="Entrar"

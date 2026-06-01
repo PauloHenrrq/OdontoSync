@@ -3,7 +3,7 @@ import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CalendarPlus, Clock, UserCircle, Heart, Bell, Stethoscope } from 'lucide-react-native';
+import { ClipboardList, Clock, UserCircle, Heart, Bell, Stethoscope, CalendarCheck } from 'lucide-react-native';
 import { Card } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { useAuthStore } from '@/src/stores/authStore';
@@ -31,10 +31,10 @@ export default function ClientHomeScreen() {
   const service = nextApt ? services.find((s) => s.id === nextApt.serviceId) : undefined;
 
   const quickActions = [
-    { icon: CalendarPlus, label: 'Agendar', color: colors.primary, route: '/(client)/booking' as const },
-    { icon: Clock, label: 'Histórico', color: colors.tertiary, route: '/(client)/profile' as const },
-    { icon: Heart, label: 'Dicas', color: '#E91E63', route: '/(client)/alerts' as const },
-    { icon: UserCircle, label: 'Perfil', color: colors.secondary, route: '/(client)/profile' as const },
+    { icon: ClipboardList, label: 'Consultas', color: colors.primary, onPress: () => router.push('/(client)/appointments') },
+    { icon: Clock, label: 'Histórico', color: colors.tertiary, onPress: () => router.push({ pathname: '/(client)/appointments', params: { tab: 'history' } }) },
+    { icon: Heart, label: 'Dicas', color: '#E91E63', onPress: () => router.push({ pathname: '/(client)/alerts', params: { tab: 'tips' } }) },
+    { icon: UserCircle, label: 'Perfil', color: colors.secondary, onPress: () => router.push('/(client)/profile') },
   ];
 
   return (
@@ -51,54 +51,78 @@ export default function ClientHomeScreen() {
           </TouchableOpacity>
         </View>
 
-        <Card style={{ marginBottom: spacing.lg, backgroundColor: colors.primaryContainer }}>
-          <Text style={s.secTitle}>Próximo Agendamento</Text>
+        <Card style={{ marginBottom: spacing.lg }}>
           {nextApt ? (
             <View style={{ gap: 12 }}>
-              <View style={s.aptRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.aptLabel}>Data e Horário</Text>
-                  <Text style={s.aptVal}>{new Date(nextApt.date + 'T12:00:00').toLocaleDateString('pt-BR')}, {nextApt.time}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.aptLabel}>Dentista</Text>
-                  <Text style={s.aptVal}>{nextApt.dentistName}</Text>
-                </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={{ fontFamily: fonts.headline, fontSize: fontSizes.titleLg, fontWeight: '700', color: colors.onSurface }}>
+                  Próximo Agendamento
+                </Text>
+                <Badge variant="status" status={nextApt.status} />
               </View>
-              {service && (
-                <View style={s.chip}>
-                  <Stethoscope size={14} color={colors.primary} />
-                  <Text style={s.chipTxt}>{service.name}</Text>
+              
+              <View style={{ backgroundColor: colors.surfaceContainerLow, borderRadius: 20, padding: spacing.md, gap: 12 }}>
+                <View style={{ flexDirection: 'row', gap: 16 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontFamily: fonts.label, fontSize: fontSizes.labelSm, color: colors.outline }}>Data e Horário</Text>
+                    <Text style={{ fontFamily: fonts.headline, fontSize: fontSizes.bodyLg, color: colors.onSurface, fontWeight: '600', marginTop: 4 }}>
+                      {new Date(nextApt.date + 'T12:00:00').toLocaleDateString('pt-BR')}, {nextApt.time}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontFamily: fonts.label, fontSize: fontSizes.labelSm, color: colors.outline }}>Dentista</Text>
+                    <Text style={{ fontFamily: fonts.headline, fontSize: fontSizes.bodyLg, color: colors.onSurface, fontWeight: '600', marginTop: 4 }}>
+                      {nextApt.dentistName}
+                    </Text>
+                  </View>
                 </View>
-              )}
-              <Badge variant="status" status={nextApt.status} />
+
+                {service && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceContainerLowest, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 12, alignSelf: 'flex-start', gap: 6 }}>
+                    <Stethoscope size={14} color={colors.primary} />
+                    <Text style={{ fontFamily: fonts.label, fontSize: fontSizes.labelMd, color: colors.primary, fontWeight: '500' }}>
+                      {service.name}
+                    </Text>
+                  </View>
+                )}
+              </View>
             </View>
           ) : (
-            <View style={{ alignItems: 'center', padding: 16 }}>
-              <Text style={s.sub}>Nenhum agendamento próximo</Text>
-              <TouchableOpacity onPress={() => router.push('/(client)/booking')}>
-                <Text style={[s.chipTxt, { marginTop: 8 }]}>Agendar agora →</Text>
+            <View style={{ alignItems: 'center', paddingVertical: 8 }}>
+              <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.primaryFixed + '40', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                <CalendarCheck size={28} color={colors.primary} />
+              </View>
+              <Text style={{ fontFamily: fonts.headline, fontSize: fontSizes.titleLg, fontWeight: '700', color: colors.onSurface, textAlign: 'center' }}>
+                Próximo Agendamento
+              </Text>
+              <Text style={{ fontFamily: fonts.body, fontSize: fontSizes.bodyMd, color: colors.onSurfaceVariant, textAlign: 'center', marginTop: 6, lineHeight: 20, paddingHorizontal: 8 }}>
+                Você não possui consultas agendadas para os próximos dias.
+              </Text>
+              <TouchableOpacity
+                onPress={() => router.push('/(client)/appointments')}
+                style={{
+                  marginTop: 16,
+                  backgroundColor: colors.primary,
+                  paddingVertical: 12,
+                  borderRadius: 20,
+                  alignItems: 'center',
+                  width: '100%',
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={{ fontFamily: fonts.label, fontSize: fontSizes.labelLg, color: colors.onPrimary, fontWeight: '600' }}>
+                  Ver Consultas
+                </Text>
               </TouchableOpacity>
             </View>
           )}
         </Card>
 
-        <View style={{ marginBottom: spacing.lg }}>
-          <Text style={s.secTitle}>Seu Tratamento</Text>
-          <Card variant="filled" padding="md">
-            <View style={{ height: 8, backgroundColor: colors.surfaceContainerHigh, borderRadius: 4, overflow: 'hidden', marginBottom: 6 }}>
-              <View style={{ height: '100%', width: '65%', backgroundColor: colors.primary, borderRadius: 4 }} />
-            </View>
-            <Text style={[s.chipTxt, { marginBottom: 4 }]}>65% concluído</Text>
-            <Text style={s.sub}>Acompanhamento Ortodôntico</Text>
-          </Card>
-        </View>
-
         <View>
           <Text style={s.secTitle}>Acesso Rápido</Text>
           <View style={s.grid}>
             {quickActions.map((a) => (
-              <TouchableOpacity key={a.label} style={s.gridItem} onPress={() => router.push(a.route)} activeOpacity={0.7}>
+              <TouchableOpacity key={a.label} style={s.gridItem} onPress={a.onPress} activeOpacity={0.7}>
                 <View style={[s.gridIcon, { backgroundColor: a.color + '1A' }]}>
                   <a.icon size={24} color={a.color} />
                 </View>
