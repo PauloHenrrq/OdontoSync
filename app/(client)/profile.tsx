@@ -166,8 +166,6 @@ export default function ProfileScreen() {
     { icon: HelpCircle, label: 'Ajuda e Suporte', action: () => setActiveModal('help') },
   ];
 
-  const closeModal = () => setActiveModal(null);
-
   // ── Modal Header reutilizável ──
   const ModalHeader = ({ title }: { title: string }) => (
     <View style={m.header}>
