@@ -202,7 +202,7 @@ export default function RegisterScreen() {
           {!!error ? <Text style={styles.errorMessage}>{error}</Text> : null}
 
           <Button
-            title="Entrar"
+            title="Registrar"
             onPress={handleSubmit(onSubmit, onInvalid)}
             loading={isLoading}
             fullWidth
