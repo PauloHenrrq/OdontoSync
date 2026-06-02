@@ -3,19 +3,14 @@ import { User } from '@/src/types';
 import { api } from './api';
 
 export const AuthService = {
-  login: async (emailOrPhone: string, password: string): Promise<User | null> => {
-    try {
-      const response = await api.post<{ token: string; user: User }>('/auth/login', {
-        emailOrPhone,
-        password,
-      });
-      
-      await AsyncStorage.setItem('auth_token', response.token);
-      return response.user;
-    } catch (error) {
-      console.error('Login error:', error);
-      return null;
-    }
+  login: async (emailOrPhone: string, password: string): Promise<User> => {
+    const response = await api.post<{ token: string; user: User }>('/auth/login', {
+      emailOrPhone,
+      password,
+    });
+    
+    await AsyncStorage.setItem('auth_token', response.token);
+    return response.user;
   },
 
   sendOtp: async (phone: string): Promise<{ success: boolean; devCode?: string; error?: string }> => {

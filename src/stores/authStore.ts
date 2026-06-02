@@ -34,18 +34,17 @@ export const useAuthStore = create<AuthState>()(
       login: async (emailOrPhone, password) => {
         set({ isLoading: true, error: null });
 
-        const user = await AuthService.login(emailOrPhone, password);
-
-        if (user) {
+        try {
+          const user = await AuthService.login(emailOrPhone, password);
           set({ user, isAuthenticated: true, isLoading: false, error: null });
           return true;
+        } catch (err: any) {
+          set({
+            isLoading: false,
+            error: err.message || 'Credenciais inválidas. Verifique email/telefone e senha.',
+          });
+          return false;
         }
-
-        set({
-          isLoading: false,
-          error: 'Credenciais inválidas. Verifique email/telefone e senha.',
-        });
-        return false;
       },
 
       sendOtp: async (phone) => {
