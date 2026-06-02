@@ -20,7 +20,6 @@ export const AuthService = {
       });
       return response;
     } catch (error: any) {
-      console.error('Send OTP error:', error);
       return { success: false, error: error.message || 'Erro ao enviar código.' };
     }
   },
@@ -38,7 +37,6 @@ export const AuthService = {
       await AsyncStorage.setItem('auth_token', response.token);
       return response.user;
     } catch (error) {
-      console.error('Register error:', error);
       throw error; // Propaga o erro real para capturar a mensagem correta na UI
     }
   },
