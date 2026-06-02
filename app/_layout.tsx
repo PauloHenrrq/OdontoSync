@@ -24,6 +24,7 @@ import { useAppointmentStore } from '@/src/stores/appointmentStore';
 import { useClinicStore } from '@/src/stores/clinicStore';
 import { UserRole } from '@/src/types';
 import { registerForPushNotificationsAsync } from '@/src/services/notificationService';
+import { AuthService } from '@/src/services/authService';
 
 import 'react-native-reanimated';
 
@@ -63,6 +64,13 @@ function useProtectedRoute() {
         fetchPatients();
         fetchConfig();
       }
+
+      // Registrar push token e enviar ao servidor
+      registerForPushNotificationsAsync().then((token) => {
+        if (token) {
+          AuthService.savePushToken(token).catch(() => {});
+        }
+      });
     }
   }, [isAuthenticated, user?.role]);
 }
@@ -85,9 +93,6 @@ export default function RootLayout() {
   useEffect(() => {
     if (manropeLoaded && interLoaded) {
       SplashScreen.hideAsync();
-      registerForPushNotificationsAsync().catch((err) => {
-        console.log('Falha segura ao inicializar canais de notificações:', err);
-      });
     }
   }, [manropeLoaded, interLoaded]);
 

@@ -43,5 +43,9 @@ export const AuthService = {
 
   logout: async (): Promise<void> => {
     await AsyncStorage.removeItem('auth_token');
-  }
+  },
+
+  savePushToken: async (pushToken: string): Promise<void> => {
+    await api.post('/auth/push-token', { pushToken });
+  },
 };
