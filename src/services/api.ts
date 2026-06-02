@@ -50,9 +50,9 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  // Configuração de limite de tempo (Timeout de 10 segundos) via AbortController
+  // Configuração de limite de tempo (Timeout de 30 segundos para acomodar SMTP e Render Free Tier) via AbortController
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
 
   try {
     const response = await fetch(`${API_URL}${endpoint}`, {
