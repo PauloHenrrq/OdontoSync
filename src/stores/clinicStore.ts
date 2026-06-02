@@ -102,9 +102,7 @@ export const useClinicStore = create<ClinicStore>()(
 
       // Persistir no banco de dados via API
       if (currentConfig.id) {
-        ClinicService.updateConfig(currentConfig.id, partial).catch((err) =>
-          console.error('Failed to persist config update:', err)
-        );
+        ClinicService.updateConfig(currentConfig.id, partial).catch(() => {});
       }
     },
 

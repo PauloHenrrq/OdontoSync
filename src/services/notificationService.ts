@@ -49,7 +49,6 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
 
   // 4. Se o usuário recusar a permissão
   if (finalStatus !== 'granted') {
-    console.log('Permissão para notificações push foi recusada.');
     return null;
   }
 
@@ -63,9 +62,8 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
       projectId,
     });
     token = expoToken.data;
-    console.log('Expo Push Token gerado com sucesso:', token);
   } catch (error) {
-    console.log('Nota: Não foi possível obter o Push Token do Expo (comum em simuladores iOS/Android).');
+    // Falha silenciosa comum em simuladores
   }
 
   return token;

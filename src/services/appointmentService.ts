@@ -7,7 +7,6 @@ export const AppointmentService = {
       const response = await api.get<{ appointments: Appointment[] }>('/appointments');
       return response.appointments;
     } catch (error) {
-      console.error('Failed to get appointments:', error);
       return [];
     }
   },
@@ -17,7 +16,6 @@ export const AppointmentService = {
       const response = await api.get<{ appointments: Appointment[] }>(`/appointments/by-date/${date}`);
       return response.appointments;
     } catch (error) {
-      console.error('Failed to get appointments by date:', error);
       return [];
     }
   },
@@ -30,7 +28,6 @@ export const AppointmentService = {
       });
       return response.appointment;
     } catch (error) {
-      console.error('Failed to book appointment:', error);
       return null;
     }
   },
@@ -40,7 +37,6 @@ export const AppointmentService = {
       await api.patch(`/appointments/${appointmentId}/status`, { status });
       return true;
     } catch (error) {
-      console.error('Failed to update status:', error);
       return false;
     }
   }

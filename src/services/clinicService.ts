@@ -12,7 +12,6 @@ export const ClinicService = {
       const response = await api.get<{ config: ClinicConfig }>('/clinic/config');
       return response.config;
     } catch (error) {
-      console.error('Failed to get clinic config:', error);
       return null;
     }
   },
@@ -22,7 +21,6 @@ export const ClinicService = {
       const response = await api.patch<{ config: ClinicConfig }>(`/clinic/config/${id}`, body);
       return response.config;
     } catch (error) {
-      console.error('Failed to update clinic config:', error);
       return null;
     }
   },
@@ -32,7 +30,6 @@ export const ClinicService = {
       const response = await api.get<{ services: DentalService[] }>('/clinic/services');
       return response.services;
     } catch (error) {
-      console.error('Failed to get services:', error);
       return [];
     }
   },
@@ -42,7 +39,6 @@ export const ClinicService = {
       const response = await api.get<{ patients: User[] }>('/patients');
       return response.patients;
     } catch (error) {
-      console.error('Failed to get patients:', error);
       return [];
     }
   },
