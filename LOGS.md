@@ -496,5 +496,36 @@
   - **Tratamento de Exceção startsWith (agenda.tsx):** Adicionado tratamento de presença para a propriedade `email` do paciente (`patient.email`), impedindo erros do tipo *Cannot read properties of undefined (reading 'startsWith')* quando o paciente for retornado sem o campo de e-mail preenchido.
   - **Sincronização ao Obter Foco (agenda.tsx):** Implementado o hook `useFocusEffect` na tela da Agenda Admin para sincronizar a lista de pacientes (`fetchPatients`), configurações da clínica (`fetchConfig`) e agendamentos (`fetchAppointments`) sempre que a tela é acessada. Isso garante que a verificação de cadastro seja feita com a lista de pacientes atualizada do banco, evitando falsos positivos de lembretes pendentes de pacientes que já possuem cadastro.
   - **Garantia de Qualidade:** Código compilado com sucesso sem erros de tipagem TypeScript e testes passando no Vitest.
-- **Próximo Passo:** Commitar e realizar o push das alterações.
+  - **Próximo Passo:** Commitar e realizar o push das alterações.
+
+## 2026-06-03 (Correção do Filtro de Lembretes e Agenda Totalmente Scrollável)
+
+- **Task:** Corrigir exibição de lembretes para pacientes registrados no banco de dados e transformar a Agenda Admin em uma tela de rolagem integral com botão de "voltar ao topo".
+- **Status:** Concluído.
+- **Ações:**
+  - **Correção da Prioridade de Busca de Paciente (`agenda.tsx`):**
+    - Identificamos que a rota do backend `/api/appointments` retornava a propriedade `user` no objeto de agendamento, mas intencionalmente não selecionava o campo `email` no query da query do Prisma.
+    - Como resultado, a lógica `a.user ?? getPatientByPhone(a.phone)` sempre caía no objeto `a.user` (que existia), porém sem o campo `email` preenchido. Isso causava falha na verificação `hasCompleteRegistration` (que buscava `email` e não encontrava), fazendo com que pacientes totalmente registrados continuassem aparecendo como lembretes pendentes.
+    - Corrigimos a ordem de fallback para `getPatientByPhone(a.phone) ?? a.user`. Desta forma, o app busca primeiro o cadastro completo na lista de pacientes sincronizada (que contém todos os e-mails reais do backend) e apenas se não encontrar utiliza o `a.user` raso do agendamento, solucionando a exibição indevida de lembretes pendentes para pacientes cadastrados.
+  - **Refatoração da Agenda para Rolagem Integral (`agenda.tsx`):**
+    - Removido o ScrollView interno que isolava apenas os cards de agendamento e envolto o layout inteiro da tela em um único `ScrollView` vertical referenciado por `mainScrollRef`. Isso permite que o cabeçalho, calendário, seletores de dias e banner rolem naturalmente para fora da tela junto com a lista.
+    - Para compensar a perda do ScrollView e evitar erros de ScrollViews aninhados, a lista de cartões foi substituída por uma `View` flexível normal.
+  - **Botão Seta de Voltar ao Topo (`agenda.tsx`):**
+    - Adicionado hook de escuta de scroll (`onScroll`) monitorando o offset `y` da tela. Quando o usuário rolar mais de `150px` para baixo (ocultando a seção superior), exibe-se uma barra superior reservada estilizada com blur/overlay (`stickyTopBar`) contendo um botão de seta para cima (`ChevronUp`).
+    - Ao ser clicada, rola suavemente a tela de volta para o topo da visualização (`y: 0`), garantindo uma excelente experiência de navegação ao usuário.
+- **Próximo Passo:** Executar testes locais e sincronizar as modificações com o repositório remoto.
+
+## 2026-06-03 (Otimização de UX: Cadastro de Agendamentos Sem Bloqueios)
+
+- **Task:** Agilizar o processo de criação de múltiplos agendamentos para a recepcionista, tornando-o rápido, fluído e intuitivo.
+- **Status:** Concluído.
+- **Ações:**
+  - **Auto-preenchimento Inteligente de Datas (`agenda.tsx`):**
+    - Configurado o botão flutuante de criação (FAB) para ler o estado da data selecionada no calendário da tela (`selectedDate`) e preenchê-la automaticamente no campo de data do formulário no formato `DD/MM/AAAA`. Isso elimina um passo completo de digitação para a recepcionista.
+  - **Substituição de Feedback Bloqueante por Toast Não-bloqueante (`agenda.tsx`):**
+    - Substituída a exibição de `Alert.alert('Sucesso', ...)` que interrompia o fluxo e requeria um clique extra de confirmação por um banner flutuante auto-expansível no rodapé da tela (`successToast`) com duração de 2.5 segundos.
+    - O modal do agendamento é fechado instantaneamente ao salvar, permitindo que a recepcionista continue interagindo com a agenda e insira novos agendamentos sem pausas.
+  - **Isolamento de Estado de Submissão (`agenda.tsx`):**
+    - Adicionado estado local `isSubmitting` para controlar o disable e o loading do botão de salvar. Isso evita interferências e comportamentos de travamento inconsistentes causados pelo estado global `isLoading` do store de agendamentos.
+- **Próximo Passo:** Executar commits de saúde e subir modificações para a branch `developer`.
 
