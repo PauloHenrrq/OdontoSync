@@ -476,4 +476,14 @@
   - **Ajuste de Layout (Cadastro):** Posicionado o botão de voltar de forma absoluta no topo esquerdo e reduzidos os espaçamentos do cabeçalho da tela de cadastro (`register.tsx`), maximizando a visibilidade das informações e campos do formulário sem necessidade de rolagem excessiva.
 - **Próximo Passo:** Prosseguir com novos testes de usabilidade e refinar o design de acordo com o feedback do usuário.
 
+## 2026-06-03 (Ajuste de Responsividade e Centralização no Calendário Admin)
+
+- **Task:** Corrigir responsividade de dias marcados/não marcados no calendário da Agenda (Admin) e realizar ajuste fino de posicionamento do círculo.
+- **Status:** Concluído.
+- **Ações:**
+  - **Introdução de dayCircle Fixo (agenda.tsx):** Refatorado o grid de dias do calendário administrativo para utilizar um wrapper interno de tamanho fixo (`dayCircle`: 36x36, borderRadius: 18) para a área de destaque e seleção. Isso impede que as bolinhas fiquem ovaladas/achatadas ou mudem de tamanho de acordo com a presença do ponto de agendamento.
+  - **Posicionamento Absoluto do Ponto de Agendamento (agenda.tsx):** Adicionado `alignSelf: 'center'` e posicionamento absoluto ao `gridGreenDot`, eliminando qualquer empurrão no layout flexível do dia.
+  - **Ajuste Fino de Centralização Óptica (agenda.tsx):** Adicionado `marginLeft: 1` no `dayCircle` para deslocar o círculo 1px para a direita, melhorando a harmonia visual dentro do grid.
+  - **Garantia de Qualidade:** Testes unitários do Frontend executados e passados com sucesso (`vitest`).
+- **Próximo Passo:** Efetuar commit e push das modificações para o repositório remoto.
 

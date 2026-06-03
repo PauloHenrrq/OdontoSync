@@ -734,11 +734,7 @@ export default function AgendaScreen() {
                     return (
                       <TouchableOpacity
                         key={dayStr}
-                        style={[
-                          s.dayCell,
-                          isSelected && s.dayCellSelected,
-                          isToday && !isSelected && s.dayCellToday,
-                        ]}
+                        style={s.dayCell}
                         onPress={() => {
                           const dayStr = formatDateStr(day);
                           if (calendarTarget === 'main') {
@@ -753,23 +749,31 @@ export default function AgendaScreen() {
                         }}
                         activeOpacity={0.7}
                       >
-                        <Text
+                        <View
                           style={[
-                            s.dayCellTxt,
-                            isSelected && s.dayCellTxtSelected,
-                            isToday && !isSelected && s.dayCellTxtToday,
+                            s.dayCircle,
+                            isSelected && s.dayCircleSelected,
+                            isToday && !isSelected && s.dayCircleToday,
                           ]}
                         >
-                          {day.getDate()}
-                        </Text>
-                        {hasAptOnDay && (
-                          <View
+                          <Text
                             style={[
-                              s.gridGreenDot,
-                              isSelected && s.gridGreenDotSelected,
+                              s.dayCellTxt,
+                              isSelected && s.dayCellTxtSelected,
+                              isToday && !isSelected && s.dayCellTxtToday,
                             ]}
-                          />
-                        )}
+                          >
+                            {day.getDate()}
+                          </Text>
+                          {hasAptOnDay && (
+                            <View
+                              style={[
+                                s.gridGreenDot,
+                                isSelected && s.gridGreenDotSelected,
+                              ]}
+                            />
+                          )}
+                        </View>
                       </TouchableOpacity>
                     );
                   })}
@@ -1109,9 +1113,10 @@ const s = StyleSheet.create({
   weekdayRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   weekdayTxt: { flex: 1, textAlign: 'center', fontFamily: fonts.label, fontSize: 11, color: colors.outline, fontWeight: '600' },
   daysGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 6 },
-  dayCell: { width: `${100 / 7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 20 },
-  dayCellSelected: { backgroundColor: colors.primary },
-  dayCellToday: { borderWidth: 1.5, borderColor: colors.primaryFixedDim },
+  dayCell: { width: `${100 / 7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  dayCircle: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', position: 'relative', marginLeft: 1 },
+  dayCircleSelected: { backgroundColor: colors.primary },
+  dayCircleToday: { borderWidth: 1.5, borderColor: colors.primaryFixedDim },
   dayCellEmpty: { width: `${100 / 7}%`, aspectRatio: 1 },
   dayCellTxt: { fontFamily: fonts.bodyMedium, fontSize: 13, color: colors.onSurface },
   dayCellTxtSelected: { color: colors.onPrimary, fontWeight: '700' },
@@ -1215,6 +1220,7 @@ const s = StyleSheet.create({
     backgroundColor: '#4CAF50',
     position: 'absolute',
     bottom: 4,
+    alignSelf: 'center',
   },
   gridGreenDotSelected: {
     backgroundColor: colors.onPrimary,
