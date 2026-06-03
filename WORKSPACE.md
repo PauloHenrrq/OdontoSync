@@ -159,4 +159,8 @@ O projeto utiliza o **Expo Router** (roteamento baseado em arquivos), onde a est
   - What: Criação de um wrapper circular interno fixo (`dayCircle` 36x36) no calendário administrativo para garantir bolinhas perfeitamente redondas, posicionamento absoluto do ponto indicador de agendamento e deslocamento visual fino de 1px para a direita.
   - Workflows: /log, /commit
   - Next: Realizar o commit e push das alterações estruturais do app.
+- [2026-06-03] fix: Filtro Inteligente de Notificações Manuais na Agenda Admin
+  - What: Atualização do filtro de `pendingReminders` para omitir pacientes com cadastro completo (que possuem e-mail real e senha), exibindo no painel de ações requeridas apenas usuários sem cadastro que necessitam de WhatsApp semi-automático.
+  - Workflows: /log, /commit
+  - Next: Efetuar commit e push para o repositório remoto.
 <!-- LOG_END -->
