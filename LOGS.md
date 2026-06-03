@@ -529,3 +529,18 @@
     - Adicionado estado local `isSubmitting` para controlar o disable e o loading do botão de salvar. Isso evita interferências e comportamentos de travamento inconsistentes causados pelo estado global `isLoading` do store de agendamentos.
 - **Próximo Passo:** Executar commits de saúde e subir modificações para a branch `developer`.
 
+## 2026-06-03 (Validação e Limitação de Horários no Agendamento)
+
+- **Task:** Impedir agendamento de horários impossíveis ou inválidos (ex: 85:99) restringindo as horas até 23 e os minutos até 59.
+- **Status:** Concluído.
+- **Ações:**
+  - **Limitação Dinâmica em Tempo Real (`agenda.tsx`):**
+    - Refatorada a função auxiliar `maskTime`. Se o primeiro dígito digitado for igual ou maior que 3, ele é auto-prefixado com "0" (ex: "8" vira "08"), guiando o formato.
+    - Se os primeiros dois dígitos excederem 23, eles são limitados automaticamente a 23.
+    - Se os dois últimos dígitos (minutos) excederem 59, eles são limitados automaticamente a 59.
+  - **Validação de Envio no Frontend (`agenda.tsx`):**
+    - Adicionado teste de formato via regex `/^([01]\d|2[0-3]):[0-5]\d$/` no fluxo de submissão do formulário. Caso o horário não atenda ao padrão de 00:00 a 23:59, exibe um alerta instrutivo e bloqueia o envio.
+  - **Validação Estrutural no Backend (`appointment.routes.ts`):**
+    - Injetada validação por expressão regular no schema Zod (`bookingSchema`) para o campo `time`, garantindo a integridade dos dados mesmo se a requisição contornar a interface do frontend.
+- **Próximo Passo:** Prosseguir com o push de sincronização final dos repositórios.
+
