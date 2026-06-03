@@ -237,24 +237,28 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing['2xl'],
+    paddingTop: spacing.xl,
     paddingBottom: spacing.xl,
   },
   backButton: {
+    position: 'absolute',
+    top: spacing.md,
+    left: spacing.md,
     width: 44,
     height: 44,
     borderRadius: 22,
     backgroundColor: colors.surfaceContainerLow,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.lg,
+    zIndex: 10,
   },
   header: {
     alignItems: 'center',
-    marginBottom: spacing.xl,
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
   },
   logoContainer: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   logoImage: {
     width: 100,
