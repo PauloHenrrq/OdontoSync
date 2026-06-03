@@ -155,4 +155,8 @@ O projeto utiliza o **Expo Router** (roteamento baseado em arquivos), onde a est
   - What: Remoção do slogan da tela de registro, correção do toggle de visibilidade de senha (forgot-password), aplicação de validações de senha, correção de importação ausente de `create` no `notificationStore.ts`, atualização de todos os ícones e logo do app com fundo branco, e otimização do posicionamento absoluto da seta de voltar e espaçamentos no cadastro (`register.tsx`).
   - Workflows: /log
   - Next: Prosseguir com novos testes de usabilidade e refinar o design de acordo com o feedback do usuário.
+- [2026-06-03] fix: Ajuste de Responsividade e Centralização no Calendário Admin
+  - What: Criação de um wrapper circular interno fixo (`dayCircle` 36x36) no calendário administrativo para garantir bolinhas perfeitamente redondas, posicionamento absoluto do ponto indicador de agendamento e deslocamento visual fino de 1px para a direita.
+  - Workflows: /log, /commit
+  - Next: Realizar o commit e push das alterações estruturais do app.
 <!-- LOG_END -->

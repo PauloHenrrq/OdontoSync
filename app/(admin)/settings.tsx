@@ -576,7 +576,7 @@ const s = StyleSheet.create({
   },
   addCustomBtn: {
     backgroundColor: colors.primary,
-    paddingHorizontal: 14,
+    paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: 8,
   },
