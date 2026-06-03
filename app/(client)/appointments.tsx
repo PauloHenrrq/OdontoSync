@@ -248,6 +248,7 @@ const s = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     marginBottom: spacing.md,
+    textAlign: 'center',
   },
   tabs: {
     flexDirection: 'row',

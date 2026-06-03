@@ -130,12 +130,34 @@ export default function ForgotPasswordScreen() {
     setConfirmPasswordError('');
 
     let hasError = false;
+    
+    // Validação da senha nova
     if (password.length < 6) {
       setPasswordError('A senha deve ter pelo menos 6 caracteres');
       hasError = true;
+    } else if (!/[A-Z]/.test(password)) {
+      setPasswordError('A senha deve conter pelo menos uma letra maiúscula');
+      hasError = true;
+    } else if (!/[a-z]/.test(password)) {
+      setPasswordError('A senha deve conter pelo menos uma letra minúscula');
+      hasError = true;
+    } else if (!/\d/.test(password)) {
+      setPasswordError('A senha deve conter pelo menos um número');
+      hasError = true;
     }
+
+    // Validação da confirmação da senha
     if (!confirmPassword) {
       setConfirmPasswordError('Confirme sua senha');
+      hasError = true;
+    } else if (!/[A-Z]/.test(confirmPassword)) {
+      setConfirmPasswordError('A senha deve conter pelo menos uma letra maiúscula');
+      hasError = true;
+    } else if (!/[a-z]/.test(confirmPassword)) {
+      setConfirmPasswordError('A senha deve conter pelo menos uma letra minúscula');
+      hasError = true;
+    } else if (!/\d/.test(confirmPassword)) {
+      setConfirmPasswordError('A senha deve conter pelo menos um número');
       hasError = true;
     } else if (password !== confirmPassword) {
       setConfirmPasswordError('As senhas não coincidem');
@@ -272,6 +294,7 @@ export default function ForgotPasswordScreen() {
             </View>
 
             <Input
+              key={showPassword ? 'pass-show' : 'pass-hide'}
               label="Nova Senha"
               placeholder="Digite pelo menos 6 caracteres"
               value={password}
@@ -288,6 +311,7 @@ export default function ForgotPasswordScreen() {
             />
 
             <Input
+              key={showConfirmPassword ? 'conf-show' : 'conf-hide'}
               label="Confirmar Nova Senha"
               placeholder="Confirme sua nova senha"
               value={confirmPassword}
