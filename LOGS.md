@@ -473,6 +473,7 @@
   - **Restrições Estruturais de Senha:** Atualizado o schema Zod de registro (`auth.schema.ts`) e o formulário de redefinição de senha (`forgot-password.tsx`) para exigir que ambas as senhas possuam no mínimo 6 caracteres, contendo pelo menos uma letra maiúscula, uma letra minúscula e um número.
   - **Importação de 'create' no Notification Store:** Adicionada a importação de `create` de `'zustand'` em `notificationStore.ts`, resolvendo o erro de referência (`create is not defined`) que causava erro interno de servidor (500) no frontend.
   - **Processamento e Otimização da Logo:** Gerados os arquivos da logo e de todos os ícones do aplicativo (`icon.png`, `favicon.png`, `adaptive-icon.png` e `splash-icon.png`) a partir do modelo original `Logo-OdontoSync.jpeg` com fundo branco sólido. O arquivo principal de imagem foi salvo em `Logo-OdontoSync.png` para compatibilidade com as referências, mantendo o tamanho de exibição em `100x100` pixels.
+  - **Ajuste de Layout (Cadastro):** Posicionado o botão de voltar de forma absoluta no topo esquerdo e reduzidos os espaçamentos do cabeçalho da tela de cadastro (`register.tsx`), maximizando a visibilidade das informações e campos do formulário sem necessidade de rolagem excessiva.
 - **Próximo Passo:** Prosseguir com novos testes de usabilidade e refinar o design de acordo com o feedback do usuário.
 
 
