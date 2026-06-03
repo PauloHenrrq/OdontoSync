@@ -3,14 +3,14 @@
 // Painel de agendamentos diários com picker dinâmico e modal calendário.
 // ============================================================
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TouchableWithoutFeedback, TextInput, Animated, LayoutAnimation, Platform, UIManager, ActivityIndicator, Linking } from 'react-native';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { ChevronLeft, ChevronRight, Check, X, AlertTriangle, Calendar, Plus, ChevronDown, Bell, Phone, Clock } from 'lucide-react-native';
 import { Card } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
@@ -252,6 +252,15 @@ export default function AgendaScreen() {
   const phoneSuggestions = newApt.phone.replace(/\D/g, '').length >= 2 
     ? patients.filter(p => p.phone.replace(/\D/g, '').includes(newApt.phone.replace(/\D/g, ''))).slice(0, 3)
     : [];
+
+  // Sincroniza pacientes, configurações e agendamentos sempre que a tela recebe foco
+  useFocusEffect(
+    useCallback(() => {
+      useClinicStore.getState().fetchPatients();
+      useClinicStore.getState().fetchConfig();
+      useAppointmentStore.getState().fetchAppointments();
+    }, [])
+  );
 
   // Garante que, ao abrir a tela (mount), as datas são resetadas para o dia atual de hoje
   useEffect(() => {
