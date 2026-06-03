@@ -26,6 +26,7 @@ import { useClinicStore } from '@/src/stores/clinicStore';
 import { UserRole } from '@/src/types';
 import { registerForPushNotificationsAsync } from '@/src/services/notificationService';
 import { AuthService } from '@/src/services/authService';
+import * as Notifications from 'expo-notifications';
 
 import 'react-native-reanimated';
 
@@ -86,6 +87,24 @@ function useProtectedRoute(hydrated: boolean) {
           AuthService.savePushToken(token).catch(() => {});
         }
       });
+
+      // Ouvintes para capturar notificações e salvar no sininho local (Zustand)
+      const receivedSubscription = Notifications.addNotificationReceivedListener((notification) => {
+        const title = notification.request.content.title || 'Notificação';
+        const message = notification.request.content.body || '';
+        useNotificationStore.getState().addNotification(title, message);
+      });
+
+      const responseSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
+        const title = response.notification.request.content.title || 'Notificação';
+        const message = response.notification.request.content.body || '';
+        useNotificationStore.getState().addNotification(title, message);
+      });
+
+      return () => {
+        receivedSubscription.remove();
+        responseSubscription.remove();
+      };
     }
   }, [isAuthenticated, user?.role, hydrated]);
 }
