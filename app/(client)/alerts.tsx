@@ -53,7 +53,7 @@ export default function AlertsScreen() {
         {activeTab === 'notifications' ? (
           notifications.length > 0 ? notifications.map((n) => (
             <TouchableOpacity key={n.id} onPress={() => handleNotificationPress(n)} activeOpacity={0.8}>
-              <Card style={[s.nCard, !n.read ? s.nCardUnread : undefined]} padding="md">
+              <Card style={[s.nCard, { borderLeftColor: n.read ? 'transparent' : colors.primary }]} padding="md">
                 <View style={s.nRow}>
                   <View style={[s.nIcon, { backgroundColor: n.read ? colors.surfaceContainerHigh : colors.primaryFixed + '40' }]}>
                     <Bell size={18} color={n.read ? colors.outline : colors.primary} />
@@ -131,8 +131,7 @@ const s = StyleSheet.create({
   badge: { backgroundColor: colors.error, borderRadius: 8, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
   badgeTxt: { color: '#FFF', fontSize: 10, fontWeight: '700' },
   scroll: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, gap: 12 },
-  nCard: { marginBottom: 0 },
-  nCardUnread: { borderLeftWidth: 3, borderLeftColor: colors.primary },
+  nCard: { marginBottom: 0, borderLeftWidth: 3 },
   nRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   nIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   nTitle: { fontFamily: fonts.headline, fontSize: fontSizes.titleSm, fontWeight: '600', color: colors.onSurface, marginBottom: 2 },

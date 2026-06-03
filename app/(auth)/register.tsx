@@ -11,6 +11,7 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
@@ -104,10 +105,14 @@ export default function RegisterScreen() {
 
         {/* Header */}
         <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('../../assets/images/Logo-OdontoSync.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+          </View>
           <Text style={styles.title}>Criar Conta</Text>
-          <Text style={styles.subtitle}>
-            A excelência em seu sorriso.
-          </Text>
         </View>
 
         {/* Form */}
@@ -245,7 +250,15 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   header: {
+    alignItems: 'center',
     marginBottom: spacing.xl,
+  },
+  logoContainer: {
+    marginBottom: spacing.md,
+  },
+  logoImage: {
+    width: 100,
+    height: 100,
   },
   title: {
     fontFamily: fonts.headline,
@@ -253,11 +266,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.onSurface,
     marginBottom: spacing.sm,
+    textAlign: 'center',
   },
   subtitle: {
     fontFamily: fonts.body,
     fontSize: fontSizes.bodyLg,
     color: colors.onSurfaceVariant,
+    textAlign: 'center',
   },
   form: {
     width: '100%',

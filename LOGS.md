@@ -463,3 +463,16 @@
     - Injetada a instrução de execução dos testes automatizados (`npm run test`) em ambos os jobs (`validate-frontend` e `validate-backend`), forçando testes contínuos a cada validação e bloqueando deploys em caso de quebras de regras de negócio.
 - **Próximo Passo:** Prosseguir com o push das modificações para o repositório remoto.
 
+## 2026-06-03 (Correção de Slogan, Visibilidade de Campos e Restrições de Senha)
+
+- **Task:** Limpar o slogan da tela de registro, corrigir o toggle de visualização/ocultação de senha e aplicar validação de estrutura de senha.
+- **Status:** Concluído.
+- **Ações:**
+  - **Remoção de Slogan:** Removido o subtítulo "A excelência em seu sorriso." do cabeçalho da tela de cadastro (`register.tsx`).
+  - **Correção de Visibilidade (Forgot Password):** Adicionados atributos `key` dinâmicos atrelados ao estado de visualização nos campos "Nova Senha" e "Confirmar Nova Senha" em `forgot-password.tsx`. Isso força a recriação do componente no DOM/React Native Web, garantindo que o comportamento de ocultar/mostrar e a alternância do ícone do olho funcionem perfeitamente.
+  - **Restrições Estruturais de Senha:** Atualizado o schema Zod de registro (`auth.schema.ts`) e o formulário de redefinição de senha (`forgot-password.tsx`) para exigir que ambas as senhas possuam no mínimo 6 caracteres, contendo pelo menos uma letra maiúscula, uma letra minúscula e um número.
+  - **Importação de 'create' no Notification Store:** Adicionada a importação de `create` de `'zustand'` em `notificationStore.ts`, resolvendo o erro de referência (`create is not defined`) que causava erro interno de servidor (500) no frontend.
+  - **Processamento e Otimização da Logo:** Gerados os arquivos da logo e de todos os ícones do aplicativo (`icon.png`, `favicon.png`, `adaptive-icon.png` e `splash-icon.png`) a partir do modelo original `Logo-OdontoSync.jpeg` com fundo branco sólido. O arquivo principal de imagem foi salvo em `Logo-OdontoSync.png` para compatibilidade com as referências, mantendo o tamanho de exibição em `100x100` pixels.
+- **Próximo Passo:** Prosseguir com novos testes de usabilidade e refinar o design de acordo com o feedback do usuário.
+
+

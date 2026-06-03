@@ -151,4 +151,8 @@ O projeto utiliza o **Expo Router** (roteamento baseado em arquivos), onde a est
   - Decisions: Máscaras de input refatoradas (baseadas em slice) para permitir navegação livre do cursor sem bugs do React Native Web.
   - Workflows: `/refactor`, `/log`
   - Next: Melhorar validação no formulário de Agendamento e implementar UI interativa para disparo de mensagens de WhatsApp.
+- [2026-06-03] fix: Correção de Slogan, Visibilidade de Campos, Restrições de Senha e Logo
+  - What: Remoção do slogan da tela de registro, correção do toggle de visibilidade de senha (forgot-password), aplicação de validações de senha, correção de importação ausente de `create` no `notificationStore.ts`, e atualização da logo e de todos os ícones do app (`icon`, `favicon`, `adaptive-icon` e `splash-icon`) com fundo branco sólido a partir do modelo original.
+  - Workflows: /log
+  - Next: Prosseguir com novos testes de usabilidade e refinar o design de acordo com o feedback do usuário.
 <!-- LOG_END -->
