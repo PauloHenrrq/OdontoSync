@@ -93,8 +93,33 @@ const maskDate = (val: string) => {
 
 const maskTime = (val: string) => {
   let v = val.replace(/\D/g, '');
+  
+  // Se o primeiro dígito for >= 3, adiciona o prefixo '0' (ex: '8' vira '08')
+  if (v.length === 1 && parseInt(v, 10) >= 3) {
+    v = '0' + v;
+  }
+  
   if (v.length > 4) v = v.slice(0, 4);
   if (v.length === 0) return '';
+  
+  // Limita os primeiros dois dígitos (horas) até 23
+  if (v.length >= 2) {
+    let hh = parseInt(v.slice(0, 2), 10);
+    if (hh > 23) {
+      hh = 23;
+    }
+    v = String(hh).padStart(2, '0') + v.slice(2);
+  }
+  
+  // Limita os dois últimos dígitos (minutos) até 59
+  if (v.length >= 4) {
+    let mm = parseInt(v.slice(2, 4), 10);
+    if (mm > 59) {
+      mm = 59;
+    }
+    v = v.slice(0, 2) + String(mm).padStart(2, '0');
+  }
+  
   if (v.length <= 2) return v;
   return `${v.slice(0, 2)}:${v.slice(2)}`;
 };
@@ -691,6 +716,13 @@ export default function AgendaScreen() {
                       const todayStr = getTodayStr(); // YYYY-MM-DD
                       if (isoDate < todayStr) {
                         Alert.alert('Atenção', 'A data do agendamento não pode ser anterior a hoje.');
+                        return;
+                      }
+
+                      // Validação rigorosa do horário (HH:MM de 00:00 a 23:59)
+                      const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+                      if (!timeRegex.test(newApt.time)) {
+                        Alert.alert('Atenção', 'Por favor, insira um horário válido no formato HH:MM (de 00:00 a 23:59).');
                         return;
                       }
 
