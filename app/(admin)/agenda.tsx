@@ -174,6 +174,7 @@ export default function AgendaScreen() {
   })();
 
   // Filtra agendamentos nos períodos configurados que ainda não foram dispensados
+  // Apenas pacientes SEM cadastro completo (emails que começam com 'sem-email-' ou sem cadastro) precisam de lembrete manual
   const pendingReminders = appointments.filter((a) => {
     if (a.status !== AppointmentStatus.PENDING && a.status !== AppointmentStatus.CONFIRMED) {
       return false;
@@ -181,6 +182,14 @@ export default function AgendaScreen() {
     if (dismissedReminderIds.has(a.id)) {
       return false;
     }
+    
+    // Verifica se o paciente possui cadastro completo no sistema
+    const patient = a.user ?? getPatientByPhone(a.phone);
+    const hasCompleteRegistration = patient && !patient.email.startsWith('sem-email-');
+    if (hasCompleteRegistration) {
+      return false;
+    }
+
     const diffDays = getDaysDifference(a.date);
     return activeReminderDays.includes(diffDays);
   });

@@ -487,3 +487,12 @@
   - **Garantia de Qualidade:** Testes unitários do Frontend executados e passados com sucesso (`vitest`).
 - **Próximo Passo:** Efetuar commit e push das modificações para o repositório remoto.
 
+## 2026-06-03 (Filtro Inteligente de Notificações Manuais na Agenda Admin)
+
+- **Task:** Alterar a lógica do painel de notificações e do Banner de Ações Requeridas para omitir pacientes com cadastro completo.
+- **Status:** Concluído.
+- **Ações:**
+  - **Exclusão de Pacientes Cadastrados do Fluxo Manual (agenda.tsx):** Atualizado o filtro de `pendingReminders` para verificar o status de cadastro do paciente (`patient && !patient.email.startsWith('sem-email-')`). Pacientes com cadastro completo (que possuem e-mail real e senha) recebem lembretes de forma 100% automatizada pelo sistema (notificações push/e-mail), não necessitando da ação manual da recepcionista via WhatsApp.
+  - **Garantia de Qualidade:** Código compilado com sucesso sem erros de tipagem TypeScript e testes passando no Vitest.
+- **Próximo Passo:** Commitar e realizar o push das alterações.
+
