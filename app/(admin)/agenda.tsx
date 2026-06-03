@@ -185,7 +185,7 @@ export default function AgendaScreen() {
     
     // Verifica se o paciente possui cadastro completo no sistema
     const patient = a.user ?? getPatientByPhone(a.phone);
-    const hasCompleteRegistration = patient && !patient.email.startsWith('sem-email-');
+    const hasCompleteRegistration = patient && patient.email && !patient.email.startsWith('sem-email-');
     if (hasCompleteRegistration) {
       return false;
     }
