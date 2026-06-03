@@ -160,7 +160,7 @@ O projeto utiliza o **Expo Router** (roteamento baseado em arquivos), onde a est
   - Workflows: /log, /commit
   - Next: Realizar o commit e push das alterações estruturais do app.
 - [2026-06-03] fix: Filtro Inteligente de Notificações Manuais na Agenda Admin
-  - What: Atualização do filtro de `pendingReminders` para omitir pacientes com cadastro completo (que possuem e-mail real e senha), exibindo no painel de ações requeridas apenas usuários sem cadastro que necessitam de WhatsApp semi-automático.
+  - What: Atualização do filtro de `pendingReminders` para omitir pacientes com cadastro completo (que possuem e-mail real e senha), exibindo no painel de ações requeridas apenas usuários sem cadastro que necessitam de WhatsApp semi-automático, adicionando segurança contra e-mails nulos/indefinidos.
   - Workflows: /log, /commit
   - Next: Efetuar commit e push para o repositório remoto.
 <!-- LOG_END -->

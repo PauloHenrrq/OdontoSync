@@ -493,6 +493,7 @@
 - **Status:** Concluído.
 - **Ações:**
   - **Exclusão de Pacientes Cadastrados do Fluxo Manual (agenda.tsx):** Atualizado o filtro de `pendingReminders` para verificar o status de cadastro do paciente (`patient && !patient.email.startsWith('sem-email-')`). Pacientes com cadastro completo (que possuem e-mail real e senha) recebem lembretes de forma 100% automatizada pelo sistema (notificações push/e-mail), não necessitando da ação manual da recepcionista via WhatsApp.
+  - **Tratamento de Exceção startsWith (agenda.tsx):** Adicionado tratamento de presença para a propriedade `email` do paciente (`patient.email`), impedindo erros do tipo *Cannot read properties of undefined (reading 'startsWith')* quando o paciente for retornado sem o campo de e-mail preenchido.
   - **Garantia de Qualidade:** Código compilado com sucesso sem erros de tipagem TypeScript e testes passando no Vitest.
 - **Próximo Passo:** Commitar e realizar o push das alterações.
 
