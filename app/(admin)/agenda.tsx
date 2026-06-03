@@ -11,7 +11,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
-import { ChevronLeft, ChevronRight, Check, X, AlertTriangle, Calendar, Plus, ChevronDown, Bell, Phone, Clock } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Check, X, AlertTriangle, Calendar, Plus, ChevronDown, ChevronUp, Bell, Phone, Clock } from 'lucide-react-native';
 import { Card } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { Alert } from '@/src/components/ui/Alert';
@@ -119,6 +119,8 @@ export default function AgendaScreen() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showServiceDropdown, setShowServiceDropdown] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, boolean>>({});
+  const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Estados para Sino de Notificação e Lembretes
   const [isNotificationModalVisible, setIsNotificationModalVisible] = useState(false);
@@ -184,7 +186,7 @@ export default function AgendaScreen() {
     }
     
     // Verifica se o paciente possui cadastro completo no sistema
-    const patient = a.user ?? getPatientByPhone(a.phone);
+    const patient = getPatientByPhone(a.phone) ?? a.user;
     const hasCompleteRegistration = patient && patient.email && !patient.email.startsWith('sem-email-');
     if (hasCompleteRegistration) {
       return false;
@@ -228,6 +230,8 @@ export default function AgendaScreen() {
   };
   
   const rotateAnim = useRef(new Animated.Value(0)).current;
+  const mainScrollRef = useRef<ScrollView>(null);
+  const [showGoToTop, setShowGoToTop] = useState(false);
 
   const toggleServiceDropdown = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -322,142 +326,170 @@ export default function AgendaScreen() {
 
   return (
     <SafeAreaView style={s.container}>
-      {/* Top Header Row */}
-      <View style={s.headerRow}>
-        <Text style={s.title}>Agenda da Clínica</Text>
-        <TouchableOpacity 
-          style={s.bellBtn} 
-          activeOpacity={0.7} 
-          onPress={() => setIsNotificationModalVisible(true)}
-        >
-          <Bell size={24} color={colors.primary} />
-          {pendingRemindersCount > 0 && (
-            <View style={s.bellBadge}>
-              <Text style={s.bellBadgeTxt}>{pendingRemindersCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      {/* Cabeçalho da Data Formatada */}
-      <View style={s.dateHeader}>
-        <View style={s.dateHeaderTitleCol}>
-          <Text style={s.dateHeaderLabel}>Data Selecionada</Text>
-          <Text style={s.dateHeaderVal}>
-            {new Date(selectedDate + 'T12:00:00').toLocaleDateString('pt-BR', {
-              day: 'numeric',
-              month: 'long',
-            })}
-          </Text>
+      {/* Seta/Barra reservada no topo para voltar ao início ao rolar */}
+      {showGoToTop && (
+        <View style={s.stickyTopBar}>
+          <TouchableOpacity
+            style={s.goToTopBtn}
+            onPress={() => mainScrollRef.current?.scrollTo({ x: 0, y: 0, animated: true })}
+            activeOpacity={0.8}
+          >
+            <ChevronUp size={24} color={colors.primary} />
+          </TouchableOpacity>
         </View>
-      </View>
-
-      {/* Seletor Horizontal de 5 dias em torno da data central */}
-      <View style={{ marginBottom: spacing.xs }}>
-        <View style={s.dateRow}>
-          {dates.map((d) => {
-            const dt = new Date(d + 'T12:00:00');
-            const isActive = d === selectedDate;
-            const hasAptOnDay = appointments.some(a => a.date === d && a.status !== 'CANCELLED');
-            return (
-              <TouchableOpacity key={d} style={[s.dateChip, isActive && s.dateChipActive]} onPress={() => setSelectedDate(d)}>
-                <Text style={[s.dateDay, isActive && s.dateDayActive]}>{dt.toLocaleDateString('pt-BR', { weekday: 'short' })}</Text>
-                <Text style={[s.dateNum, isActive && s.dateNumActive]}>{dt.getDate()}</Text>
-                {hasAptOnDay && (
-                  <View style={[s.greenDot, isActive && s.greenDotActive]} />
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
-
-      {/* Ver Calendário posicionado na esquerda em baixo das datas atuais */}
-      <View style={s.calendarBtnRow}>
-        <TouchableOpacity 
-          style={s.calendarBtn} 
-          onPress={() => {
-            setCalendarTarget('main');
-            setIsModalVisible(true);
-          }} 
-          activeOpacity={0.7}
-        >
-          <Calendar size={16} color={colors.primary} />
-          <Text style={s.calendarBtnTxt}>Ver Calendário</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Banner Inteligente de Lembretes */}
-      {pendingRemindersCount > 0 ? (
-        <TouchableOpacity 
-          style={s.smartBanner}
-          activeOpacity={0.85}
-          onPress={() => setIsNotificationModalVisible(true)}
-        >
-          <AlertTriangle size={20} color="#E65100" />
-          <View style={{ flex: 1 }}>
-            <Text style={s.smartBannerTitle}>Ações Requeridas Hoje</Text>
-            <Text style={s.smartBannerSub}>Você possui {pendingRemindersCount} {pendingRemindersCount === 1 ? 'lembrete pendente' : 'lembretes pendentes'} nos períodos configurados.</Text>
-          </View>
-          <ChevronRight size={18} color="#E65100" />
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity 
-          style={s.smartBannerSuccess}
-          activeOpacity={0.85}
-          onPress={() => setIsNotificationModalVisible(true)}
-        >
-          <Check size={20} color="#2E7D32" />
-          <View style={{ flex: 1 }}>
-            <Text style={s.smartBannerSuccessTitle}>Tudo sob Controle!</Text>
-            <Text style={s.smartBannerSuccessSub}>Todos os lembretes nos prazos configurados já foram enviados ou estão em dia.</Text>
-          </View>
-          <ChevronRight size={18} color="#2E7D32" />
-        </TouchableOpacity>
       )}
 
-      {/* Título Estático "Agenda Atual" */}
-      <View style={s.listHeader}>
-        <Text style={s.listHeaderTitle}>Agenda Atual</Text>
-      </View>
-
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
-        style={s.scrollContainer}
-        contentContainerStyle={s.scroll}
+      <ScrollView
+        ref={mainScrollRef}
+        showsVerticalScrollIndicator={false}
+        onScroll={(event) => {
+          const offsetY = event.nativeEvent.contentOffset.y;
+          if (offsetY > 150) {
+            setShowGoToTop(true);
+          } else {
+            setShowGoToTop(false);
+          }
+        }}
+        scrollEventThrottle={16}
+        style={s.container}
+        contentContainerStyle={{ paddingBottom: spacing.xl }}
       >
-        {dayApts.length > 0 ? dayApts.map((apt) => {
-          const svc = services.find((sv) => sv.id === apt.serviceId) || apt.service;
-          const patient = apt.user ?? (apt.userId ? getPatientByPhone(apt.phone) : undefined);
-          return (
-            <Card 
-              key={apt.id} 
-              style={[s.aptCard, { borderLeftWidth: 4, borderLeftColor: statusColors[apt.status] }]} 
-              padding="md"
-            >
-              <View style={s.aptHeader}>
-                <Text style={s.aptTime}>{apt.time}</Text>
-                <Badge variant="status" status={apt.status} />
+        {/* Top Header Row */}
+        <View style={s.headerRow}>
+          <Text style={s.title}>Agenda da Clínica</Text>
+          <TouchableOpacity 
+            style={s.bellBtn} 
+            activeOpacity={0.7} 
+            onPress={() => setIsNotificationModalVisible(true)}
+          >
+            <Bell size={24} color={colors.primary} />
+            {pendingRemindersCount > 0 && (
+              <View style={s.bellBadge}>
+                <Text style={s.bellBadgeTxt}>{pendingRemindersCount}</Text>
               </View>
-              <Text style={s.aptName}>{patient?.name ?? apt.phone}</Text>
-              <Text style={s.aptSvc}>{svc?.name ?? 'Consulta'} — {apt.dentistName}</Text>
-              {apt.notes && <Text style={s.aptNotes}>📋 {apt.notes}</Text>}
-              {!apt.userId && <Text style={s.orphan}>📱 Paciente sem app — WhatsApp</Text>}
+            )}
+          </TouchableOpacity>
+        </View>
 
-              {(apt.status === AppointmentStatus.PENDING || apt.status === AppointmentStatus.CONFIRMED) && (
-                <View style={s.actions}>
-                  <TouchableOpacity style={[s.actWarn, { flex: 1 }]} onPress={() => handleAction(apt.id, 'marcar falta')}>
-                    <AlertTriangle size={16} color="#E65100" /><Text style={s.actTxtO}>Marcar Falta</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </Card>
-          );
-        }) : (
-          <Card variant="filled" padding="lg">
-            <Text style={{ textAlign: 'center', color: colors.outline, fontFamily: fonts.body }}>Nenhum agendamento neste dia</Text>
-          </Card>
+        {/* Cabeçalho da Data Formatada */}
+        <View style={s.dateHeader}>
+          <View style={s.dateHeaderTitleCol}>
+            <Text style={s.dateHeaderLabel}>Data Selecionada</Text>
+            <Text style={s.dateHeaderVal}>
+              {new Date(selectedDate + 'T12:00:00').toLocaleDateString('pt-BR', {
+                day: 'numeric',
+                month: 'long',
+              })}
+            </Text>
+          </View>
+        </View>
+
+        {/* Seletor Horizontal de 5 dias em torno da data central */}
+        <View style={{ marginBottom: spacing.xs }}>
+          <View style={s.dateRow}>
+            {dates.map((d) => {
+              const dt = new Date(d + 'T12:00:00');
+              const isActive = d === selectedDate;
+              const hasAptOnDay = appointments.some(a => a.date === d && a.status !== 'CANCELLED');
+              return (
+                <TouchableOpacity key={d} style={[s.dateChip, isActive && s.dateChipActive]} onPress={() => setSelectedDate(d)}>
+                  <Text style={[s.dateDay, isActive && s.dateDayActive]}>{dt.toLocaleDateString('pt-BR', { weekday: 'short' })}</Text>
+                  <Text style={[s.dateNum, isActive && s.dateNumActive]}>{dt.getDate()}</Text>
+                  {hasAptOnDay && (
+                    <View style={[s.greenDot, isActive && s.greenDotActive]} />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Ver Calendário posicionado na esquerda em baixo das datas atuais */}
+        <View style={s.calendarBtnRow}>
+          <TouchableOpacity 
+            style={s.calendarBtn} 
+            onPress={() => {
+              setCalendarTarget('main');
+              setIsModalVisible(true);
+            }} 
+            activeOpacity={0.7}
+          >
+            <Calendar size={16} color={colors.primary} />
+            <Text style={s.calendarBtnTxt}>Ver Calendário</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Banner Inteligente de Lembretes */}
+        {pendingRemindersCount > 0 ? (
+          <TouchableOpacity 
+            style={s.smartBanner}
+            activeOpacity={0.85}
+            onPress={() => setIsNotificationModalVisible(true)}
+          >
+            <AlertTriangle size={20} color="#E65100" />
+            <View style={{ flex: 1 }}>
+              <Text style={s.smartBannerTitle}>Ações Requeridas Hoje</Text>
+              <Text style={s.smartBannerSub}>Você possui {pendingRemindersCount} {pendingRemindersCount === 1 ? 'lembrete pendente' : 'lembretes pendentes'} nos períodos configurados.</Text>
+            </View>
+            <ChevronRight size={18} color="#E65100" />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity 
+            style={s.smartBannerSuccess}
+            activeOpacity={0.85}
+            onPress={() => setIsNotificationModalVisible(true)}
+          >
+            <Check size={20} color="#2E7D32" />
+            <View style={{ flex: 1 }}>
+              <Text style={s.smartBannerSuccessTitle}>Tudo sob Controle!</Text>
+              <Text style={s.smartBannerSuccessSub}>Todos os lembretes nos prazos configurados já foram enviados ou estão em dia.</Text>
+            </View>
+            <ChevronRight size={18} color="#2E7D32" />
+          </TouchableOpacity>
         )}
+
+        {/* Título Estático "Agenda Atual" */}
+        <View style={s.listHeader}>
+          <Text style={s.listHeaderTitle}>Agenda Atual</Text>
+        </View>
+
+        {/* Lista de agendamentos dentro de View normal (estendendo o scroll da tela inteira) */}
+        <View style={s.scrollContainer}>
+          <View style={s.scroll}>
+            {dayApts.length > 0 ? dayApts.map((apt) => {
+              const svc = services.find((sv) => sv.id === apt.serviceId) || apt.service;
+              const patient = apt.user ?? (apt.userId ? getPatientByPhone(apt.phone) : undefined);
+              return (
+                <Card 
+                  key={apt.id} 
+                  style={[s.aptCard, { borderLeftWidth: 4, borderLeftColor: statusColors[apt.status] }]} 
+                  padding="md"
+                >
+                  <View style={s.aptHeader}>
+                    <Text style={s.aptTime}>{apt.time}</Text>
+                    <Badge variant="status" status={apt.status} />
+                  </View>
+                  <Text style={s.aptName}>{patient?.name ?? apt.phone}</Text>
+                  <Text style={s.aptSvc}>{svc?.name ?? 'Consulta'} — {apt.dentistName}</Text>
+                  {apt.notes && <Text style={s.aptNotes}>📋 {apt.notes}</Text>}
+                  {!apt.userId && <Text style={s.orphan}>📱 Paciente sem app — WhatsApp</Text>}
+
+                  {(apt.status === AppointmentStatus.PENDING || apt.status === AppointmentStatus.CONFIRMED) && (
+                    <View style={s.actions}>
+                      <TouchableOpacity style={[s.actWarn, { flex: 1 }]} onPress={() => handleAction(apt.id, 'marcar falta')}>
+                        <AlertTriangle size={16} color="#E65100" /><Text style={s.actTxtO}>Marcar Falta</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </Card>
+              );
+            }) : (
+              <Card variant="filled" padding="lg">
+                <Text style={{ textAlign: 'center', color: colors.outline, fontFamily: fonts.body }}>Nenhum agendamento neste dia</Text>
+              </Card>
+            )}
+          </View>
+        </View>
       </ScrollView>
 
       {/* Modal de Novo Agendamento */}
@@ -618,8 +650,8 @@ export default function AgendaScreen() {
                   />
 
                   <TouchableOpacity 
-                    style={[s.saveBtn, isLoading && { backgroundColor: colors.outline, opacity: 0.8 }]} 
-                    disabled={isLoading}
+                    style={[s.saveBtn, isSubmitting && { backgroundColor: colors.outline, opacity: 0.8 }]} 
+                    disabled={isSubmitting}
                     onPress={async () => { 
                       const errors: Record<string, boolean> = {};
                       if (!newApt.phone) errors.phone = true;
@@ -666,6 +698,7 @@ export default function AgendaScreen() {
                       const cleanPhone = newApt.phone.replace(/\D/g, '');
                       const linkedPatient = getPatientByPhone(cleanPhone);
 
+                      setIsSubmitting(true);
                       const success = await bookAppointment(
                         linkedPatient?.id ?? '',
                         cleanPhone,
@@ -677,26 +710,30 @@ export default function AgendaScreen() {
                           patientName: !linkedPatient ? newApt.name : undefined,
                         }
                       );
+                      setIsSubmitting(false);
 
                       if (success) {
                         // Sincroniza pacientes em segundo plano sem bloquear a interface de agendamento da recepcionista!
                         useClinicStore.getState().fetchPatients();
-                        Alert.alert('Sucesso', 'Agendamento salvo com sucesso!');
                         setNewApt({ phone: '', name: '', dentist: 'Dr. Paulo', serviceId: '', date: '', time: '' });
                         closeNewAptModal();
+                        
+                        // Exibe feedback visual não-bloqueante na tela principal
+                        setSuccessToast('Agendamento salvo com sucesso!');
+                        setTimeout(() => setSuccessToast(null), 2500);
                       } else {
                         Alert.alert('Erro', 'Não foi possível salvar o agendamento. Tente novamente.');
                       }
                     }} 
                     activeOpacity={0.8}
                   >
-                    {isLoading ? (
+                    {isSubmitting ? (
                       <ActivityIndicator size="small" color={colors.onPrimary} style={{ marginRight: 8 }} />
                     ) : (
                       <Check size={20} color={colors.onPrimary} />
                     )}
                     <Text style={s.saveBtnTxt}>
-                      {isLoading ? 'Salvando...' : 'Salvar Agendamento'}
+                      {isSubmitting ? 'Salvando...' : 'Salvar Agendamento'}
                     </Text>
                   </TouchableOpacity>
                 </ScrollView>
@@ -1049,10 +1086,23 @@ export default function AgendaScreen() {
         </View>
       </Modal>
 
+      {/* Toast de Feedback Rápido */}
+      {successToast && (
+        <View style={s.toastContainer}>
+          <Check size={18} color="#2E7D32" />
+          <Text style={s.toastText}>{successToast}</Text>
+        </View>
+      )}
+
       {/* Botão Flutuante de Novo Agendamento (FAB) */}
       <TouchableOpacity 
         style={s.fab} 
-        onPress={() => setIsNewAptModalVisible(true)}
+        onPress={() => {
+          const parts = selectedDate.split('-');
+          const initialDate = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : '';
+          setNewApt({ phone: '', name: '', dentist: 'Dr. Paulo', serviceId: '', date: initialDate, time: '' });
+          setIsNewAptModalVisible(true);
+        }}
         activeOpacity={0.85}
       >
         <Plus size={28} color={colors.onPrimary} />
@@ -1565,5 +1615,55 @@ const s = StyleSheet.create({
     fontSize: fontSizes.labelLg,
     color: colors.onPrimary,
     fontWeight: '700',
+  },
+  stickyTopBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 54,
+    backgroundColor: colors.background + 'FA', // quase opaco para sobrepor os cards
+    borderBottomWidth: 1,
+    borderBottomColor: colors.surfaceContainerHigh,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 99,
+  },
+  goToTopBtn: {
+    padding: 10,
+    borderRadius: 20,
+    backgroundColor: colors.primaryFixed + '40',
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  toastContainer: {
+    position: 'absolute',
+    bottom: 90,
+    left: 20,
+    right: 20,
+    backgroundColor: '#E8F5E9',
+    borderColor: '#C8E6C9',
+    borderWidth: 1.5,
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 6,
+    zIndex: 9999,
+  },
+  toastText: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: '#2E7D32',
+    fontWeight: '600',
   },
 });
