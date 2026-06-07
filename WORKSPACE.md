@@ -129,6 +129,11 @@ O projeto utiliza o **Expo Router** (roteamento baseado em arquivos), onde a est
 > Mantido via `/log`.
 
 <!-- LOG_START -->
+- [2026-06-07] fix/feat: Resiliência de Timezone e ciclo de vida de Push Token
+  - What: Fixado fuso horário Brasília (UTC-3) no backend para evitar deslocamento de datas, e adicionado listener AppState no frontend para atualizar push token em transições de foreground.
+  - Decisions: Centralização da formatação de datas pt-BR por string split para evitar desvios no interpretador local do servidor.
+  - Workflows: /commit, /log
+  - Next: Gerar build APK (profile preview) para testes de campo.
 - [2026-05-10] setup: Sincronização do repositório remoto e preservação da arquitetura local
   - What: Resolvido conflito de arquivos de configuração, mesclando estrutura base do Expo sem sobrepor a governança local de arquivos Markdown.
   - Workflows: `/log`, `/arch`, `/doc`
