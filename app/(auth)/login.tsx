@@ -12,6 +12,7 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
@@ -56,12 +57,14 @@ export default function LoginScreen() {
         {/* Logo + Tagline */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
-            <View style={styles.logoIcon}>
-              <Text style={styles.logoEmoji}>🦷</Text>
-            </View>
+            <Image
+              source={require('../../assets/images/Logo-OdontoSync.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
-          <Text style={styles.appName}>OdontoSync</Text>
-          <Text style={styles.tagline}>Welcome back to your sanctuary.</Text>
+          <Text style={styles.appName}>Odonto Excell</Text>
+          <Text style={styles.tagline}>Bem-vindo de volta</Text>
         </View>
 
         {/* Form */}
@@ -72,7 +75,7 @@ export default function LoginScreen() {
             render={({ field: { onChange, value } }) => (
               <Input
                 label="Email ou Telefone"
-                placeholder="seu@email.com ou (11) 99999-9999"
+                placeholder="E-mail ou celular"
                 value={value}
                 onChangeText={onChange}
                 keyboardType="email-address"
@@ -110,13 +113,13 @@ export default function LoginScreen() {
             onPress={() => router.push('/(auth)/forgot-password')}
             style={styles.forgotLink}
           >
-            <Text style={styles.forgotText}>Forgot?</Text>
+            <Text style={styles.forgotText}>Esqueceu a senha?</Text>
           </TouchableOpacity>
 
-          {error && <Text style={styles.errorMessage}>{error}</Text>}
+          {!!error ? <Text style={styles.errorMessage}>{error}</Text> : null}
 
           <Button
-            title="Sign In"
+            title="Entrar"
             onPress={handleSubmit(onSubmit)}
             loading={isLoading}
             fullWidth
@@ -129,14 +132,14 @@ export default function LoginScreen() {
           >
             <Text style={styles.registerText}>
               Não tem uma conta?{' '}
-              <Text style={styles.registerTextBold}>Register</Text>
+              <Text style={styles.registerTextBold}>Cadastre-se</Text>
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Curating Wellness Since 2024</Text>
+          <Text style={styles.footerText}>Cultivando o Bem-Estar</Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -162,16 +165,9 @@ const styles = StyleSheet.create({
   logoContainer: {
     marginBottom: spacing.lg,
   },
-  logoIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.primaryFixed + '40',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoEmoji: {
-    fontSize: 40,
+  logoImage: {
+    width: 100,
+    height: 100,
   },
   appName: {
     fontFamily: fonts.headline,

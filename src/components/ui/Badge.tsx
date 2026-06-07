@@ -17,14 +17,14 @@ interface BadgeProps {
 
 const statusConfig: Record<AppointmentStatus, { bg: string; text: string; label: string }> = {
   [AppointmentStatus.PENDING]: {
-    bg: '#FFF3E0',
-    text: '#E65100',
-    label: 'Pendente',
+    bg: '#E8F5E9',
+    text: '#2E7D32',
+    label: 'Agendado',
   },
   [AppointmentStatus.CONFIRMED]: {
-    bg: colors.primaryFixed + '40',
-    text: colors.primary,
-    label: 'Confirmado',
+    bg: '#E8F5E9',
+    text: '#2E7D32',
+    label: 'Agendado',
   },
   [AppointmentStatus.COMPLETED]: {
     bg: '#E8F5E9',
@@ -36,10 +36,10 @@ const statusConfig: Record<AppointmentStatus, { bg: string; text: string; label:
     text: colors.error,
     label: 'Cancelado',
   },
-  [AppointmentStatus.NO_SHOW]: {
+  [AppointmentStatus.ABSENT]: {
     bg: '#FCE4EC',
     text: '#C62828',
-    label: 'No-Show',
+    label: 'Faltou',
   },
 };
 

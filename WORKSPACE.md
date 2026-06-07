@@ -141,4 +141,26 @@ O projeto utiliza o **Expo Router** (roteamento baseado em arquivos), onde a est
   - What: Implementada camada de Services para desacoplamento de estado e criada API REST protegida por JWT/RBAC com Fastify/Prisma.
   - Workflows: `/refactor`, `/build`
   - Next: Integrar frontend com backend real rodando no banco Neon DB.
+- [2026-05-18] feat: Integração ponta a ponta Fastify + Neon DB e compatibilidade web
+  - What: Substituição de mocks por chamadas reais, criação do interceptador de token JWT, utilitário Alert cross-platform e semeadura completa do banco de dados Neon.
+  - Decisions: Implementação de um módulo de Alert polimórfico para evitar travamentos de modais no Expo Web e sincronização do status de falta para ABSENT.
+  - Workflows: `/commit`, `/log`
+  - Next: Iniciar testes funcionais e de usabilidade no simulador para refinar o design e interações do aplicativo.
+- [2026-05-21] refactor: Substituição definitiva de Mocks pela API e Refinamentos de UI/UX
+  - What: Criação de rotas `/clinic/services` no backend, atualização do script de seed com pacientes do frontend, e substituição dos `mockServices`/`mockUsers` por integração via `ClinicService` no frontend. Substituição dos `Pickers` nativos por Dropdowns dinâmicos.
+  - Decisions: Máscaras de input refatoradas (baseadas em slice) para permitir navegação livre do cursor sem bugs do React Native Web.
+  - Workflows: `/refactor`, `/log`
+  - Next: Melhorar validação no formulário de Agendamento e implementar UI interativa para disparo de mensagens de WhatsApp.
+- [2026-06-03] fix: Correção de Slogan, Visibilidade de Campos, Restrições de Senha e Logo
+  - What: Remoção do slogan da tela de registro, correção do toggle de visibilidade de senha (forgot-password), aplicação de validações de senha, correção de importação ausente de `create` no `notificationStore.ts`, atualização de todos os ícones e logo do app com fundo branco, e otimização do posicionamento absoluto da seta de voltar e espaçamentos no cadastro (`register.tsx`).
+  - Workflows: /log
+  - Next: Prosseguir com novos testes de usabilidade e refinar o design de acordo com o feedback do usuário.
+- [2026-06-03] fix: Ajuste de Responsividade e Centralização no Calendário Admin
+  - What: Criação de um wrapper circular interno fixo (`dayCircle` 36x36) no calendário administrativo para garantir bolinhas perfeitamente redondas, posicionamento absoluto do ponto indicador de agendamento e deslocamento visual fino de 1px para a direita.
+  - Workflows: /log, /commit
+  - Next: Realizar o commit e push das alterações estruturais do app.
+- [2026-06-03] fix: Filtro Inteligente de Notificações Manuais na Agenda Admin
+  - What: Atualização do filtro de `pendingReminders` para omitir pacientes com cadastro completo (que possuem e-mail real e senha), exibindo no painel de ações requeridas apenas usuários sem cadastro que necessitam de WhatsApp semi-automático, adicionando segurança contra e-mails nulos/indefinidos e sincronização automática de dados no foco da tela (`useFocusEffect`) para carregar a lista de pacientes do banco de dados.
+  - Workflows: /log, /commit
+  - Next: Efetuar commit e push para o repositório remoto.
 <!-- LOG_END -->

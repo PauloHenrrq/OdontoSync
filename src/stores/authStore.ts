@@ -17,8 +17,9 @@ interface AuthState {
 
   // Actions
   login: (emailOrPhone: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, phone: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  sendOtp: (phone: string) => Promise<{ success: boolean; devCode?: string; error?: string }>;
+  register: (name: string, email: string, phone: string, password: string, code: string) => Promise<boolean>;
+  logout: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -33,43 +34,58 @@ export const useAuthStore = create<AuthState>()(
       login: async (emailOrPhone, password) => {
         set({ isLoading: true, error: null });
 
-        const user = await AuthService.login(emailOrPhone, password);
-
-        if (user) {
+        try {
+          const user = await AuthService.login(emailOrPhone, password);
           set({ user, isAuthenticated: true, isLoading: false, error: null });
           return true;
-        }
-
-        set({
-          isLoading: false,
-          error: 'Credenciais inválidas. Verifique email/telefone e senha.',
-        });
-        return false;
-      },
-
-      register: async (name, email, phone, password) => {
-        set({ isLoading: true, error: null });
-
-        const newUser = await AuthService.register(name, email, phone, password);
-
-        if (!newUser) {
+        } catch (err: any) {
           set({
             isLoading: false,
-            error: 'Email ou telefone já cadastrado.',
+            error: err.message || 'Credenciais inválidas. Verifique email/telefone e senha.',
           });
           return false;
         }
-
-        set({
-          user: newUser,
-          isAuthenticated: true,
-          isLoading: false,
-          error: null,
-        });
-        return true;
       },
 
-      logout: () => {
+      sendOtp: async (phone) => {
+        set({ isLoading: true, error: null });
+        const result = await AuthService.sendOtp(phone);
+        set({ isLoading: false });
+        return result;
+      },
+
+      register: async (name, email, phone, password, code) => {
+        set({ isLoading: true, error: null });
+
+        try {
+          const newUser = await AuthService.register(name, email, phone, password, code);
+
+          if (!newUser) {
+            set({
+              isLoading: false,
+              error: 'Não foi possível concluir o cadastro.',
+            });
+            return false;
+          }
+
+          set({
+            user: newUser,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          });
+          return true;
+        } catch (err: any) {
+          set({
+            isLoading: false,
+            error: err.message || 'Código de verificação incorreto ou inválido.',
+          });
+          return false;
+        }
+      },
+
+      logout: async () => {
+        await AuthService.logout();
         set({
           user: null,
           isAuthenticated: false,

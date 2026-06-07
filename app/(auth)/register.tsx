@@ -11,6 +11,7 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
@@ -23,9 +24,21 @@ import { useAuthStore } from '@/src/stores/authStore';
 import { registerSchema, RegisterFormData } from '@/src/schemas/auth.schema';
 import { colors, fonts, fontSizes, spacing } from '@/src/styles/tokens';
 
+import { Alert as RNAlert } from 'react-native';
+
+const maskPhone = (val: string) => {
+  let v = val.replace(/\D/g, '');
+  if (v.length > 11) v = v.slice(0, 11);
+  if (v.length === 0) return '';
+  if (v.length <= 2) return `(${v}`;
+  if (v.length <= 6) return `(${v.slice(0, 2)}) ${v.slice(2)}`;
+  if (v.length <= 10) return `(${v.slice(0, 2)}) ${v.slice(2, 6)}-${v.slice(6)}`;
+  return `(${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7)}`;
+};
+
 export default function RegisterScreen() {
   const router = useRouter();
-  const { register: registerUser, isLoading, error, clearError } = useAuthStore();
+  const { sendOtp, isLoading, error, clearError } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -43,11 +56,32 @@ export default function RegisterScreen() {
     },
   });
 
+  const onInvalid = (formErrors: any) => {
+    const firstErrorField = Object.keys(formErrors)[0];
+    if (firstErrorField) {
+      const errorMsg = formErrors[firstErrorField]?.message || 'Verifique os campos digitados.';
+      RNAlert.alert('Preenchimento Inválido', `${errorMsg}`);
+    }
+  };
+
   const onSubmit = async (data: RegisterFormData) => {
     clearError();
-    const success = await registerUser(data.name, data.email, data.phone, data.password);
-    if (success) {
-      // O redirecionamento é feito automaticamente pelo useProtectedRoute
+    const cleanPhone = data.phone.replace(/\D/g, '');
+    const response = await sendOtp(cleanPhone);
+
+    if (response.success) {
+      router.push({
+        pathname: '/(auth)/verify-otp',
+        params: {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          password: data.password,
+          tempOtpCode: response.devCode || '',
+        }
+      });
+    } else {
+      RNAlert.alert('Erro', response.error || 'Não foi possível enviar o código de verificação.');
     }
   };
 
@@ -71,10 +105,14 @@ export default function RegisterScreen() {
 
         {/* Header */}
         <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('../../assets/images/Logo-OdontoSync.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+          </View>
           <Text style={styles.title}>Criar Conta</Text>
-          <Text style={styles.subtitle}>
-            Seu sorriso merece o melhor cuidado.
-          </Text>
         </View>
 
         {/* Form */}
@@ -103,7 +141,7 @@ export default function RegisterScreen() {
                 label="Telefone"
                 placeholder="(11) 99999-9999"
                 value={value}
-                onChangeText={onChange}
+                onChangeText={(text) => onChange(maskPhone(text))}
                 keyboardType="phone-pad"
                 error={errors.phone?.message}
                 leftIcon={<Phone size={20} color={colors.outline} />}
@@ -166,11 +204,11 @@ export default function RegisterScreen() {
             )}
           />
 
-          {error && <Text style={styles.errorMessage}>{error}</Text>}
+          {!!error ? <Text style={styles.errorMessage}>{error}</Text> : null}
 
           <Button
-            title="Criar Conta"
-            onPress={handleSubmit(onSubmit)}
+            title="Registrar"
+            onPress={handleSubmit(onSubmit, onInvalid)}
             loading={isLoading}
             fullWidth
             size="lg"
@@ -182,7 +220,7 @@ export default function RegisterScreen() {
           >
             <Text style={styles.loginText}>
               Já tem conta?{' '}
-              <Text style={styles.loginTextBold}>Sign In</Text>
+              <Text style={styles.loginTextBold}>Entrar</Text>
             </Text>
           </TouchableOpacity>
         </View>
@@ -199,20 +237,32 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing['2xl'],
+    paddingTop: spacing.xl,
     paddingBottom: spacing.xl,
   },
   backButton: {
+    position: 'absolute',
+    top: spacing.md,
+    left: spacing.md,
     width: 44,
     height: 44,
     borderRadius: 22,
     backgroundColor: colors.surfaceContainerLow,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.lg,
+    zIndex: 10,
   },
   header: {
-    marginBottom: spacing.xl,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  logoContainer: {
+    marginBottom: spacing.sm,
+  },
+  logoImage: {
+    width: 100,
+    height: 100,
   },
   title: {
     fontFamily: fonts.headline,
@@ -220,11 +270,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.onSurface,
     marginBottom: spacing.sm,
+    textAlign: 'center',
   },
   subtitle: {
     fontFamily: fonts.body,
     fontSize: fontSizes.bodyLg,
     color: colors.onSurfaceVariant,
+    textAlign: 'center',
   },
   form: {
     width: '100%',
@@ -251,5 +303,67 @@ const styles = StyleSheet.create({
   loginTextBold: {
     color: colors.primary,
     fontWeight: '600',
+  },
+  helperText: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.bodySm,
+    color: colors.primary,
+    marginTop: 8,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  otpLabel: {
+    fontFamily: fonts.label,
+    fontSize: fontSizes.labelMd,
+    color: colors.onSurfaceVariant,
+    marginBottom: 12,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  otpRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 12,
+    paddingHorizontal: 4,
+  },
+  otpBox: {
+    width: 44,
+    height: 54,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceContainerLow,
+    borderWidth: 1.5,
+    borderColor: colors.outlineVariant,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  otpBoxFocused: {
+    borderColor: colors.primary,
+    backgroundColor: colors.surfaceContainer,
+    borderWidth: 2,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  otpBoxFilled: {
+    borderColor: colors.primary + '80',
+    backgroundColor: colors.surfaceContainerLowest,
+  },
+  otpDigit: {
+    fontFamily: fonts.headline,
+    fontSize: 22,
+    fontWeight: '700',
+    color: colors.outline,
+  },
+  otpDigitFilled: {
+    color: colors.primary,
+  },
+  hiddenInput: {
+    position: 'absolute',
+    width: 1,
+    height: 1,
+    opacity: 0,
   },
 });

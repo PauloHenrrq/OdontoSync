@@ -4,6 +4,15 @@
 // Carrega fontes Manrope + Inter do Design System.
 // ============================================================
 
+// Desabilitar console logs fora do ambiente de desenvolvimento (__DEV__)
+if (typeof __DEV__ !== 'undefined' ? !__DEV__ : process.env.NODE_ENV === 'production') {
+  console.log = () => {};
+  console.error = () => {};
+  console.warn = () => {};
+  console.info = () => {};
+  console.debug = () => {};
+}
+
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -11,7 +20,13 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts as useManrope, Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold } from '@expo-google-fonts/manrope';
 import { useFonts as useInter, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 import { useAuthStore } from '@/src/stores/authStore';
+import { useNotificationStore } from '@/src/stores/notificationStore';
+import { useAppointmentStore } from '@/src/stores/appointmentStore';
+import { useClinicStore } from '@/src/stores/clinicStore';
 import { UserRole } from '@/src/types';
+import { registerForPushNotificationsAsync } from '@/src/services/notificationService';
+import { AuthService } from '@/src/services/authService';
+import * as Notifications from 'expo-notifications';
 
 import 'react-native-reanimated';
 
@@ -19,28 +34,79 @@ export { ErrorBoundary } from 'expo-router';
 
 SplashScreen.preventAutoHideAsync();
 
-function useProtectedRoute() {
+import { useState } from 'react';
+
+function useProtectedRoute(hydrated: boolean) {
   const { isAuthenticated, user } = useAuthStore();
+  const { fetchAppointments } = useAppointmentStore();
+  const { fetchConfig, fetchPatients, fetchServices } = useClinicStore();
   const segments = useSegments();
   const router = useRouter();
 
+  // 1. Controle de Segurança de Rotas (RBAC) — Roda em cada mudança de rota
   useEffect(() => {
-    const inAuthGroup = segments[0] === '(auth)';
-    const inClientGroup = segments[0] === '(client)';
-    const inAdminGroup = segments[0] === '(admin)';
+    if (!hydrated) return;
+
+    const inAuthGroup = (segments as string[]).includes('(auth)');
+    const inAdminGroup = (segments as string[]).includes('(admin)');
+    const inClientGroup = (segments as string[]).includes('(client)');
 
     if (!isAuthenticated && !inAuthGroup) {
-      // Não autenticado → redireciona para login
       router.replace('/(auth)/login');
-    } else if (isAuthenticated && inAuthGroup) {
-      // Autenticado mas está na tela de auth → redireciona por role
-      if (user?.role === UserRole.ADMIN) {
-        router.replace('/(admin)');
-      } else {
+    } else if (isAuthenticated) {
+      if (inAuthGroup) {
+        if (user?.role === UserRole.ADMIN) {
+          router.replace('/(admin)');
+        } else {
+          router.replace('/(client)');
+        }
+      } else if (inAdminGroup && user?.role !== UserRole.ADMIN) {
+        // Redireciona paciente tentando acessar rotas de admin
         router.replace('/(client)');
+      } else if (inClientGroup && user?.role === UserRole.ADMIN) {
+        // Redireciona admin tentando acessar rotas de cliente
+        router.replace('/(admin)');
       }
     }
-  }, [isAuthenticated, segments, user]);
+  }, [isAuthenticated, segments, user, hydrated]);
+
+  // 2. Sincronização Inicial de Dados — Executado apenas na autenticação, NUNCA na navegação
+  useEffect(() => {
+    if (isAuthenticated && hydrated) {
+      fetchAppointments();
+      fetchServices();
+      
+      if (user?.role === UserRole.ADMIN) {
+        fetchPatients();
+        fetchConfig();
+      }
+
+      // Registrar push token e enviar ao servidor
+      registerForPushNotificationsAsync().then((token) => {
+        if (token) {
+          AuthService.savePushToken(token).catch(() => {});
+        }
+      });
+
+      // Ouvintes para capturar notificações e salvar no sininho local (Zustand)
+      const receivedSubscription = Notifications.addNotificationReceivedListener((notification) => {
+        const title = notification.request.content.title || 'Notificação';
+        const message = notification.request.content.body || '';
+        useNotificationStore.getState().addNotification(title, message);
+      });
+
+      const responseSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
+        const title = response.notification.request.content.title || 'Notificação';
+        const message = response.notification.request.content.body || '';
+        useNotificationStore.getState().addNotification(title, message);
+      });
+
+      return () => {
+        receivedSubscription.remove();
+        responseSubscription.remove();
+      };
+    }
+  }, [isAuthenticated, user?.role, hydrated]);
 }
 
 export default function RootLayout() {
@@ -58,21 +124,52 @@ export default function RootLayout() {
     Inter_700Bold,
   });
 
+  const [hydrated, setHydrated] = useState(false);
+
+  // Monitora a hidratação do Zustand persistido no AsyncStorage
   useEffect(() => {
-    if (manropeLoaded && interLoaded) {
+    let authHydrated = useAuthStore.persist.hasHydrated();
+    let notifHydrated = useNotificationStore.persist.hasHydrated();
+
+    const checkHydration = () => {
+      if (authHydrated && notifHydrated) {
+        setHydrated(true);
+      }
+    };
+
+    const unsubAuth = useAuthStore.persist.onFinishHydration(() => {
+      authHydrated = true;
+      checkHydration();
+    });
+
+    const unsubNotif = useNotificationStore.persist.onFinishHydration(() => {
+      notifHydrated = true;
+      checkHydration();
+    });
+
+    checkHydration();
+
+    return () => {
+      unsubAuth();
+      unsubNotif();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (manropeLoaded && interLoaded && hydrated) {
       SplashScreen.hideAsync();
     }
-  }, [manropeLoaded, interLoaded]);
+  }, [manropeLoaded, interLoaded, hydrated]);
 
-  if (!manropeLoaded || !interLoaded) {
+  if (!manropeLoaded || !interLoaded || !hydrated) {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return <RootLayoutNav hydrated={hydrated} />;
 }
 
-function RootLayoutNav() {
-  useProtectedRoute();
+function RootLayoutNav({ hydrated }: { hydrated: boolean }) {
+  useProtectedRoute(hydrated);
 
   return (
     <>

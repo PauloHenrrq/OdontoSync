@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "141903282128",
+    "project_id": "odontosync-40465",
+    "storage_bucket": "odontosync-40465.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:141903282128:android:ce4343a6e93665ca92c3d5",
+        "android_client_info": {
+          "package_name": "com.paulohnrq.OdontoSync"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCEG2uuzWlb9sLFoN19eboNde0640sySYs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,13 +1,15 @@
 // ============================================================
 // OdontoSync — Client Layout (Tab Navigator)
-// 4 tabs: Home, Booking, Alerts, Profile
+// 4 tabs: Home, Consultas, Alertas, Perfil
 // ============================================================
 
 import { Tabs } from 'expo-router';
-import { Home, CalendarPlus, Bell, UserCircle } from 'lucide-react-native';
+import { Home, ClipboardList, Bell, UserCircle } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts } from '@/src/styles/tokens';
 import { useNotificationStore } from '@/src/stores/notificationStore';
 import { View, Text, StyleSheet } from 'react-native';
+import { useEffect } from 'react';
 
 function TabBarBadge({ count }: { count: number }) {
   if (count <= 0) return null;
@@ -39,7 +41,12 @@ const badgeStyles = StyleSheet.create({
 });
 
 export default function ClientLayout() {
-  const { unreadCount } = useNotificationStore();
+  const { unreadCount, fetchNotifications } = useNotificationStore();
+  const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    fetchNotifications().catch(console.error);
+  }, []);
 
   return (
     <Tabs
@@ -51,8 +58,8 @@ export default function ClientLayout() {
           backgroundColor: colors.surfaceContainerLowest,
           borderTopWidth: 0,
           elevation: 0,
-          height: 80,
-          paddingBottom: 16,
+          height: 60 + insets.bottom,
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
           paddingTop: 8,
         },
         tabBarLabelStyle: {
@@ -70,11 +77,11 @@ export default function ClientLayout() {
         }}
       />
       <Tabs.Screen
-        name="booking"
+        name="appointments"
         options={{
-          title: 'Agendar',
+          title: 'Consultas',
           tabBarIcon: ({ color, size }) => (
-            <CalendarPlus size={size} color={color} />
+            <ClipboardList size={size} color={color} />
           ),
         }}
       />
@@ -102,3 +109,4 @@ export default function ClientLayout() {
     </Tabs>
   );
 }
+
