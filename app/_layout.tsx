@@ -29,6 +29,7 @@ import { AuthService } from '@/src/services/authService';
 import * as Notifications from 'expo-notifications';
 
 import 'react-native-reanimated';
+import { AppState, AppStateStatus } from 'react-native';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -82,11 +83,24 @@ function useProtectedRoute(hydrated: boolean) {
       }
 
       // Registrar push token e enviar ao servidor
-      registerForPushNotificationsAsync().then((token) => {
-        if (token) {
-          AuthService.savePushToken(token).catch(() => {});
+      const updateToken = () => {
+        registerForPushNotificationsAsync().then((token) => {
+          if (token) {
+            AuthService.savePushToken(token).catch(() => {});
+          }
+        });
+      };
+
+      updateToken();
+
+      // Atualizar o push token quando o app retornar ao primeiro plano (foreground)
+      const handleAppStateChange = (nextAppState: AppStateStatus) => {
+        if (nextAppState === 'active') {
+          updateToken();
         }
-      });
+      };
+
+      const appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
 
       // Ouvintes para capturar notificações e salvar no sininho local (Zustand)
       const receivedSubscription = Notifications.addNotificationReceivedListener((notification) => {
@@ -102,6 +116,7 @@ function useProtectedRoute(hydrated: boolean) {
       });
 
       return () => {
+        appStateSubscription.remove();
         receivedSubscription.remove();
         responseSubscription.remove();
       };
