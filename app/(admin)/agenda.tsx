@@ -504,6 +504,9 @@ export default function AgendaScreen() {
                       <TouchableOpacity style={[s.actWarn, { flex: 1 }]} onPress={() => handleAction(apt.id, 'marcar falta')}>
                         <AlertTriangle size={16} color="#E65100" /><Text style={s.actTxtO}>Marcar Falta</Text>
                       </TouchableOpacity>
+                      <TouchableOpacity style={[s.actCancel, { flex: 1 }]} onPress={() => handleAction(apt.id, 'cancelar')}>
+                        <X size={16} color={colors.error} /><Text style={s.actTxtR}>Cancelar</Text>
+                      </TouchableOpacity>
                     </View>
                   )}
                 </Card>

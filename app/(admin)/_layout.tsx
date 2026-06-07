@@ -1,6 +1,7 @@
 // OdontoSync — Admin Layout (Tab Navigator)
 import { Tabs } from 'expo-router';
 import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LayoutDashboard, CalendarCheck, Users, Settings } from 'lucide-react-native';
 import { colors, fonts } from '@/src/styles/tokens';
 import { useAppointmentStore } from '@/src/stores/appointmentStore';
@@ -8,6 +9,7 @@ import { useAppointmentStore } from '@/src/stores/appointmentStore';
 export default function AdminLayout() {
   const { appointments } = useAppointmentStore();
   const hasApts = appointments.some(a => a.status !== 'CANCELLED');
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -19,8 +21,8 @@ export default function AdminLayout() {
           backgroundColor: colors.surfaceContainerLowest,
           borderTopWidth: 0,
           elevation: 0,
-          height: 80,
-          paddingBottom: 16,
+          height: 60 + insets.bottom,
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
           paddingTop: 8,
         },
         tabBarLabelStyle: { fontFamily: fonts.label, fontSize: 11, fontWeight: '500' },
