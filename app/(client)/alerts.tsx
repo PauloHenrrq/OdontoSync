@@ -1,18 +1,24 @@
 // OdontoSync — Client: Alerts & Care Tips (Stitch: 09ab092e)
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { Bell, Heart, CheckCheck } from 'lucide-react-native';
 import { Card } from '@/src/components/ui/Card';
 import { useNotificationStore } from '@/src/stores/notificationStore';
 import { colors, fonts, fontSizes, spacing } from '@/src/styles/tokens';
 
 export default function AlertsScreen() {
-  const { notifications, careTips, markAsRead, markAllAsRead, unreadCount } = useNotificationStore();
+  const { notifications, careTips, markAsRead, markAllAsRead, unreadCount, fetchNotifications } = useNotificationStore();
   const { tab } = useLocalSearchParams<{ tab?: 'notifications' | 'tips' }>();
   const [activeTab, setActiveTab] = useState<'notifications' | 'tips'>('notifications');
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchNotifications().catch(console.error);
+    }, [])
+  );
 
   useEffect(() => {
     if (tab === 'notifications' || tab === 'tips') {

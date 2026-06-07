@@ -5,9 +5,11 @@
 
 import { Tabs } from 'expo-router';
 import { Home, ClipboardList, Bell, UserCircle } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts } from '@/src/styles/tokens';
 import { useNotificationStore } from '@/src/stores/notificationStore';
 import { View, Text, StyleSheet } from 'react-native';
+import { useEffect } from 'react';
 
 function TabBarBadge({ count }: { count: number }) {
   if (count <= 0) return null;
@@ -39,7 +41,12 @@ const badgeStyles = StyleSheet.create({
 });
 
 export default function ClientLayout() {
-  const { unreadCount } = useNotificationStore();
+  const { unreadCount, fetchNotifications } = useNotificationStore();
+  const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    fetchNotifications().catch(console.error);
+  }, []);
 
   return (
     <Tabs
@@ -51,8 +58,8 @@ export default function ClientLayout() {
           backgroundColor: colors.surfaceContainerLowest,
           borderTopWidth: 0,
           elevation: 0,
-          height: 80,
-          paddingBottom: 16,
+          height: 60 + insets.bottom,
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
           paddingTop: 8,
         },
         tabBarLabelStyle: {
