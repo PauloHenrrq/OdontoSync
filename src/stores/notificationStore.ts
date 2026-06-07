@@ -7,12 +7,14 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Notification, CareTip, NotificationChannel, NotificationStatus } from '@/src/types';
 import { mockNotifications, mockCareTips } from '@/src/mocks/notifications';
+import { NotificationApiService } from '@/src/services/notificationApiService';
 
 interface NotificationState {
   notifications: Notification[];
   careTips: CareTip[];
   unreadCount: number;
 
+  fetchNotifications: () => Promise<void>;
   markAsRead: (notificationId: string) => void;
   markAllAsRead: () => void;
   addNotification: (title: string, message: string) => void;
@@ -26,7 +28,23 @@ export const useNotificationStore = create<NotificationState>()(
       careTips: [...mockCareTips],
       unreadCount: mockNotifications.filter((n) => !n.read).length,
 
+      fetchNotifications: async () => {
+        const serverNotifications = await NotificationApiService.getAll();
+        set((state) => {
+          const existingIds = new Set(serverNotifications.map((n) => n.id));
+          const localOnly = state.notifications.filter((n) => !existingIds.has(n.id));
+          const merged = [...serverNotifications, ...localOnly].sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+          return {
+            notifications: merged,
+            unreadCount: merged.filter((n) => !n.read).length,
+          };
+        });
+      },
+
       markAsRead: (notificationId) => {
+        NotificationApiService.markAsRead(notificationId).catch(() => {});
         set((state) => {
           const updated = state.notifications.map((n) =>
             n.id === notificationId ? { ...n, read: true } : n
@@ -39,6 +57,7 @@ export const useNotificationStore = create<NotificationState>()(
       },
 
       markAllAsRead: () => {
+        NotificationApiService.markAllAsRead().catch(() => {});
         set((state) => ({
           notifications: state.notifications.map((n) => ({ ...n, read: true })),
           unreadCount: 0,

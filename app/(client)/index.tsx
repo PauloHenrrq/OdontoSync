@@ -23,6 +23,7 @@ export default function ClientHomeScreen() {
     useCallback(() => {
       useAppointmentStore.getState().fetchAppointments();
       useClinicStore.getState().fetchServices();
+      useNotificationStore.getState().fetchNotifications();
     }, [])
   );
 
