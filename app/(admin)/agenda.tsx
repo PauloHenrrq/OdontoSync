@@ -201,7 +201,7 @@ export default function AgendaScreen() {
   })();
 
   // Filtra agendamentos nos períodos configurados que ainda não foram dispensados
-  // Apenas pacientes SEM cadastro completo (emails que começam com 'sem-email-' ou sem cadastro) precisam de lembrete manual
+  // Apenas pacientes SEM cadastro completo precisam de lembrete manual, EXCETO se o agendamento for marcado como URGENTE nas observações
   const pendingReminders = appointments.filter((a) => {
     if (a.status !== AppointmentStatus.PENDING && a.status !== AppointmentStatus.CONFIRMED) {
       return false;
@@ -209,12 +209,16 @@ export default function AgendaScreen() {
     if (dismissedReminderIds.has(a.id)) {
       return false;
     }
+
+    const isUrgent = a.notes?.toUpperCase().includes('URGENTE') ?? false;
     
-    // Verifica se o paciente possui cadastro completo no sistema
-    const patient = getPatientByPhone(a.phone) ?? a.user;
-    const hasCompleteRegistration = patient && patient.email && !patient.email.startsWith('sem-email-');
-    if (hasCompleteRegistration) {
-      return false;
+    // Se não for urgente, filtra apenas pacientes sem cadastro completo
+    if (!isUrgent) {
+      const patient = getPatientByPhone(a.phone) ?? a.user;
+      const hasCompleteRegistration = patient && patient.email && !patient.email.startsWith('sem-email-');
+      if (hasCompleteRegistration) {
+        return false;
+      }
     }
 
     const diffDays = getDaysDifference(a.date);
@@ -929,7 +933,14 @@ export default function AgendaScreen() {
                         >
                           <View style={s.notificationBullet} />
                           <View style={{ flex: 1 }}>
-                            <Text style={s.notificationName}>{patientName}</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <Text style={s.notificationName}>{patientName}</Text>
+                              {apt.notes?.toUpperCase().includes('URGENTE') && (
+                                <View style={{ backgroundColor: colors.errorContainer, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+                                  <Text style={{ color: colors.error, fontFamily: fonts.label, fontSize: 10, fontWeight: '700' }}>URGENTE</Text>
+                                </View>
+                              )}
+                            </View>
                             <Text style={s.notificationSub}>Consulta {labelDias} às {apt.time}</Text>
                           </View>
                           <ChevronRight size={16} color={colors.primary} />
