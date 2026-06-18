@@ -112,18 +112,32 @@ function useProtectedRoute(hydrated: boolean) {
       };
 
       const receivedSubscription = Notifications.addNotificationReceivedListener((notification) => {
-        const title = notification.request.content.title || 'Notificação';
-        const message = notification.request.content.body || '';
-        useNotificationStore.getState().addNotification(title, message);
+        const title = notification.request.content.title ?? '';
+        const message = notification.request.content.body ?? '';
+
+        // Só salva no sininho se a notificação tiver conteúdo real (evita entradas em branco)
+        if (title.trim() || message.trim()) {
+          useNotificationStore.getState().addNotification(
+            title || 'Notificação',
+            message
+          );
+        }
 
         // Sincronização reativa baseada no tipo de push recebido
         handleIncomingNotificationData(notification.request.content.data);
       });
 
       const responseSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
-        const title = response.notification.request.content.title || 'Notificação';
-        const message = response.notification.request.content.body || '';
-        useNotificationStore.getState().addNotification(title, message);
+        const title = response.notification.request.content.title ?? '';
+        const message = response.notification.request.content.body ?? '';
+
+        // Só salva no sininho se a notificação tiver conteúdo real (evita entradas em branco)
+        if (title.trim() || message.trim()) {
+          useNotificationStore.getState().addNotification(
+            title || 'Notificação',
+            message
+          );
+        }
 
         // Sincronização reativa quando o usuário toca na notificação
         handleIncomingNotificationData(response.notification.request.content.data);
