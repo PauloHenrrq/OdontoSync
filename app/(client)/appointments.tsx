@@ -119,7 +119,7 @@ export default function AppointmentsScreen() {
     setRefreshing(true);
     try {
       await Promise.all([
-        useAppointmentStore.getState().fetchAppointments(),
+        useAppointmentStore.getState().fetchAppointments(true),
         useClinicStore.getState().fetchServices(),
       ]);
     } catch (error) {
@@ -131,7 +131,7 @@ export default function AppointmentsScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      useAppointmentStore.getState().fetchAppointments();
+      useAppointmentStore.getState().fetchAppointments(true);
       useClinicStore.getState().fetchServices();
     }, [])
   );

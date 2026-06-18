@@ -74,7 +74,8 @@ function useProtectedRoute(hydrated: boolean) {
   // 2. Sincronização Inicial de Dados — Executado apenas na autenticação, NUNCA na navegação
   useEffect(() => {
     if (isAuthenticated && hydrated) {
-      fetchAppointments();
+      // Força o primeiro carregamento completo ao inicializar a autenticação
+      fetchAppointments(true);
       fetchServices();
       
       if (user?.role === UserRole.ADMIN) {
@@ -93,10 +94,46 @@ function useProtectedRoute(hydrated: boolean) {
 
       updateToken();
 
-      // Atualizar o push token quando o app retornar ao primeiro plano (foreground)
+      // Configuração de Polling (Sincronização em segundo plano a cada 30 segundos)
+      let pollingInterval: any = null;
+
+      const startPolling = () => {
+        if (pollingInterval) clearInterval(pollingInterval);
+        
+        pollingInterval = setInterval(() => {
+          // Busca novos dados em segundo plano de forma forçada bypassando cache
+          useAppointmentStore.getState().fetchAppointments(true).catch(() => {});
+          useClinicStore.getState().fetchServices().catch(() => {});
+
+          if (user?.role === UserRole.ADMIN) {
+            useClinicStore.getState().fetchPatients().catch(() => {});
+            useClinicStore.getState().fetchConfig().catch(() => {});
+          } else {
+            useNotificationStore.getState().fetchNotifications().catch(() => {});
+          }
+        }, 30000); // Intervalo de 30 segundos
+      };
+
+      const stopPolling = () => {
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+          pollingInterval = null;
+        }
+      };
+
+      // Inicia polling inicial
+      startPolling();
+
+      // Atualizar o push token e gerenciar polling quando o app retornar ao primeiro plano (foreground)
       const handleAppStateChange = (nextAppState: AppStateStatus) => {
         if (nextAppState === 'active') {
           updateToken();
+          startPolling();
+          // Realiza sincronização imediata ao retornar ao app
+          useAppointmentStore.getState().fetchAppointments(true).catch(() => {});
+          useClinicStore.getState().fetchServices().catch(() => {});
+        } else {
+          stopPolling();
         }
       };
 
@@ -144,6 +181,7 @@ function useProtectedRoute(hydrated: boolean) {
       });
 
       return () => {
+        stopPolling();
         appStateSubscription.remove();
         receivedSubscription.remove();
         responseSubscription.remove();
