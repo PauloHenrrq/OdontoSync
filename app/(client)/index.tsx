@@ -21,7 +21,7 @@ export default function ClientHomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      useAppointmentStore.getState().fetchAppointments();
+      useAppointmentStore.getState().fetchAppointments(true);
       useClinicStore.getState().fetchServices();
       useNotificationStore.getState().fetchNotifications();
     }, [])

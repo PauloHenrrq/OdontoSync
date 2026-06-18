@@ -124,7 +124,7 @@ export default function ProfileScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      useAppointmentStore.getState().fetchAppointments();
+      useAppointmentStore.getState().fetchAppointments(true);
     }, [])
   );
 
