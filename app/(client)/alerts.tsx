@@ -16,7 +16,7 @@ export default function AlertsScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      fetchNotifications().catch(console.error);
+      fetchNotifications().catch(() => {});
     }, [])
   );
 

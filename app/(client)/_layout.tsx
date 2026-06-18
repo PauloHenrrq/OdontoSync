@@ -45,7 +45,7 @@ export default function ClientLayout() {
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    fetchNotifications().catch(console.error);
+    fetchNotifications().catch(() => {});
   }, []);
 
   return (

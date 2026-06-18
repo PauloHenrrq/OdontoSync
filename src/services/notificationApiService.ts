@@ -11,8 +11,7 @@ export const NotificationApiService = {
     try {
       const data = await api.get<{ notifications: Notification[] }>('/notifications');
       return data.notifications || [];
-    } catch (error) {
-      console.error('[NotificationApiService.getAll] Error:', error);
+    } catch {
       return [];
     }
   },
@@ -21,8 +20,7 @@ export const NotificationApiService = {
     try {
       await api.patch(`/notifications/${id}/read`, {});
       return true;
-    } catch (error) {
-      console.error('[NotificationApiService.markAsRead] Error:', error);
+    } catch {
       return false;
     }
   },
@@ -31,8 +29,7 @@ export const NotificationApiService = {
     try {
       await api.patch('/notifications/read-all', {});
       return true;
-    } catch (error) {
-      console.error('[NotificationApiService.markAllAsRead] Error:', error);
+    } catch {
       return false;
     }
   },
