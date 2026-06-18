@@ -103,16 +103,30 @@ function useProtectedRoute(hydrated: boolean) {
       const appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
 
       // Ouvintes para capturar notificações e salvar no sininho local (Zustand)
+      // + Sincronização reativa: quando o backend envia um push com dados tipados,
+      // o app do paciente atualiza automaticamente os agendamentos em tempo real.
+      const handleIncomingNotificationData = (data: Record<string, any> | undefined) => {
+        if (data?.type === 'NEW_APPOINTMENT' || data?.type === 'STATUS_CHANGED') {
+          useAppointmentStore.getState().fetchAppointments(true);
+        }
+      };
+
       const receivedSubscription = Notifications.addNotificationReceivedListener((notification) => {
         const title = notification.request.content.title || 'Notificação';
         const message = notification.request.content.body || '';
         useNotificationStore.getState().addNotification(title, message);
+
+        // Sincronização reativa baseada no tipo de push recebido
+        handleIncomingNotificationData(notification.request.content.data);
       });
 
       const responseSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
         const title = response.notification.request.content.title || 'Notificação';
         const message = response.notification.request.content.body || '';
         useNotificationStore.getState().addNotification(title, message);
+
+        // Sincronização reativa quando o usuário toca na notificação
+        handleIncomingNotificationData(response.notification.request.content.data);
       });
 
       return () => {
