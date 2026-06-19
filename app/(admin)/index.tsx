@@ -24,10 +24,10 @@ export default function AdminDashboard() {
   useFocusEffect(
     useCallback(() => {
       // Sincroniza dados frescos do banco real ao focar na tela Início (Dashboard)
-      useAppointmentStore.getState().fetchAppointments();
-      useClinicStore.getState().fetchPatients();
-      useClinicStore.getState().fetchServices();
-      useClinicStore.getState().fetchConfig();
+      useAppointmentStore.getState().fetchAppointments(true);
+      useClinicStore.getState().fetchPatients(true);
+      useClinicStore.getState().fetchServices(true);
+      useClinicStore.getState().fetchConfig(true);
     }, [])
   );
 

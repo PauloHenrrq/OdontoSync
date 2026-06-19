@@ -57,8 +57,8 @@ export default function PatientsScreen() {
   // Sincroniza pacientes e agendamentos sempre que a tela recebe foco
   useFocusEffect(
     useCallback(() => {
-      useClinicStore.getState().fetchPatients();
-      useAppointmentStore.getState().fetchAppointments();
+      useClinicStore.getState().fetchPatients(true);
+      useAppointmentStore.getState().fetchAppointments(true);
     }, [])
   );
   const [selectedPatient, setSelectedPatient] = useState<User | null>(null);

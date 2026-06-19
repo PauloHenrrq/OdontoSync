@@ -76,11 +76,11 @@ function useProtectedRoute(hydrated: boolean) {
     if (isAuthenticated && hydrated) {
       // Força o primeiro carregamento completo ao inicializar a autenticação
       fetchAppointments(true);
-      fetchServices();
+      fetchServices(true);
       
       if (user?.role === UserRole.ADMIN) {
-        fetchPatients();
-        fetchConfig();
+        fetchPatients(true);
+        fetchConfig(true);
       }
 
       // Registrar push token e enviar ao servidor
@@ -103,11 +103,11 @@ function useProtectedRoute(hydrated: boolean) {
         pollingInterval = setInterval(() => {
           // Busca novos dados em segundo plano de forma forçada bypassando cache
           useAppointmentStore.getState().fetchAppointments(true).catch(() => {});
-          useClinicStore.getState().fetchServices().catch(() => {});
+          useClinicStore.getState().fetchServices(true).catch(() => {});
 
           if (user?.role === UserRole.ADMIN) {
-            useClinicStore.getState().fetchPatients().catch(() => {});
-            useClinicStore.getState().fetchConfig().catch(() => {});
+            useClinicStore.getState().fetchPatients(true).catch(() => {});
+            useClinicStore.getState().fetchConfig(true).catch(() => {});
           } else {
             useNotificationStore.getState().fetchNotifications().catch(() => {});
           }

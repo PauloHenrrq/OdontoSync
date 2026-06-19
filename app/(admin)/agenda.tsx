@@ -289,9 +289,9 @@ export default function AgendaScreen() {
   // Sincroniza pacientes, configurações e agendamentos sempre que a tela recebe foco
   useFocusEffect(
     useCallback(() => {
-      useClinicStore.getState().fetchPatients();
-      useClinicStore.getState().fetchConfig();
-      useAppointmentStore.getState().fetchAppointments();
+      useClinicStore.getState().fetchPatients(true);
+      useClinicStore.getState().fetchConfig(true);
+      useAppointmentStore.getState().fetchAppointments(true);
     }, [])
   );
 
