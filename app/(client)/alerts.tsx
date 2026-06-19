@@ -3,13 +3,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { Bell, Heart, CheckCheck } from 'lucide-react-native';
+import { Bell, Heart, CheckCheck, Trash2 } from 'lucide-react-native';
 import { Card } from '@/src/components/ui/Card';
 import { useNotificationStore } from '@/src/stores/notificationStore';
 import { colors, fonts, fontSizes, spacing } from '@/src/styles/tokens';
 
 export default function AlertsScreen() {
-  const { notifications, careTips, markAsRead, markAllAsRead, unreadCount, fetchNotifications } = useNotificationStore();
+  const { notifications, careTips, markAsRead, markAllAsRead, clearReadNotifications, unreadCount, fetchNotifications } = useNotificationStore();
   const { tab } = useLocalSearchParams<{ tab?: 'notifications' | 'tips' }>();
   const [activeTab, setActiveTab] = useState<'notifications' | 'tips'>('notifications');
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
@@ -35,11 +35,21 @@ export default function AlertsScreen() {
     <SafeAreaView style={s.container}>
       <View style={s.header}>
         <Text style={s.title}>Alertas</Text>
-        {activeTab === 'notifications' && unreadCount > 0 && (
-          <TouchableOpacity onPress={markAllAsRead} style={s.markAll}>
-            <CheckCheck size={18} color={colors.primary} />
-            <Text style={s.markAllTxt}>Marcar todas</Text>
-          </TouchableOpacity>
+        {activeTab === 'notifications' && (
+          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+            {unreadCount > 0 && (
+              <TouchableOpacity onPress={markAllAsRead} style={s.markAll}>
+                <CheckCheck size={18} color={colors.primary} />
+                <Text style={s.markAllTxt}>Marcar todas</Text>
+              </TouchableOpacity>
+            )}
+            {notifications.some(n => n.read) && (
+              <TouchableOpacity onPress={clearReadNotifications} style={s.markAll}>
+                <Trash2 size={16} color={colors.error} />
+                <Text style={[s.markAllTxt, { color: colors.error }]}>Limpar lidas</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         )}
       </View>
 

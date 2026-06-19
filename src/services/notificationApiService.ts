@@ -33,4 +33,13 @@ export const NotificationApiService = {
       return false;
     }
   },
+
+  async clearRead(): Promise<boolean> {
+    try {
+      await api.delete('/notifications/clear-read');
+      return true;
+    } catch {
+      return false;
+    }
+  },
 };

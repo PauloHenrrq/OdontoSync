@@ -488,29 +488,49 @@ export default function AgendaScreen() {
             {dayApts.length > 0 ? dayApts.map((apt) => {
               const svc = services.find((sv) => sv.id === apt.serviceId) || apt.service;
               const patient = apt.user ?? (apt.userId ? getPatientByPhone(apt.phone) : undefined);
+
+              // Calcula se passou de 30 minutos do horário marcado ou se é de dia anterior
+              const now = new Date();
+              const aptDateTime = new Date(`${apt.date}T${apt.time}:00`);
+              const diffMinutes = (now.getTime() - aptDateTime.getTime()) / (1000 * 60);
+              const isPast30Min = diffMinutes > 30;
+
+              const aptDateOnly = new Date(apt.date + 'T00:00:00');
+              const todayDateOnly = new Date();
+              todayDateOnly.setHours(0, 0, 0, 0);
+              aptDateOnly.setHours(0, 0, 0, 0);
+              const isPast1Day = todayDateOnly.getTime() - aptDateOnly.getTime() >= (1000 * 60 * 60 * 24);
+
+              const isAutoCompleted = (apt.status === AppointmentStatus.PENDING || apt.status === AppointmentStatus.CONFIRMED) && isPast30Min;
+              const cardBorderColor = isAutoCompleted ? '#78909C' : statusColors[apt.status];
+              const displayStatus = isAutoCompleted ? AppointmentStatus.COMPLETED : apt.status;
+
               return (
                 <Card 
                   key={apt.id} 
-                  style={[s.aptCard, { borderLeftWidth: 4, borderLeftColor: statusColors[apt.status] }]} 
+                  style={[s.aptCard, { borderLeftWidth: 4, borderLeftColor: cardBorderColor }]} 
                   padding="md"
                 >
                   <View style={s.aptHeader}>
                     <Text style={s.aptTime}>{apt.time}</Text>
-                    <Badge variant="status" status={apt.status} />
+                    <Badge variant="status" status={displayStatus} />
                   </View>
                   <Text style={s.aptName}>{patient?.name ?? apt.phone}</Text>
                   <Text style={s.aptSvc}>{svc?.name ?? 'Consulta'} — {apt.dentistName}</Text>
                   {apt.notes && <Text style={s.aptNotes}>📋 {apt.notes}</Text>}
                   {!apt.userId && <Text style={s.orphan}>📱 Paciente sem app — WhatsApp</Text>}
 
-                  {(apt.status === AppointmentStatus.PENDING || apt.status === AppointmentStatus.CONFIRMED) && (
+                  {/* Mostra botões apenas se não for dia passado, e se o status for pendente/confirmado */}
+                  {!isPast1Day && (apt.status === AppointmentStatus.PENDING || apt.status === AppointmentStatus.CONFIRMED) && (
                     <View style={s.actions}>
                       <TouchableOpacity style={[s.actWarn, { flex: 1 }]} onPress={() => handleAction(apt.id, 'marcar falta')}>
                         <AlertTriangle size={16} color="#E65100" /><Text style={s.actTxtO}>Marcar Falta</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity style={[s.actCancel, { flex: 1 }]} onPress={() => handleAction(apt.id, 'cancelar')}>
-                        <X size={16} color={colors.error} /><Text style={s.actTxtR}>Cancelar</Text>
-                      </TouchableOpacity>
+                      {!isPast30Min && (
+                        <TouchableOpacity style={[s.actCancel, { flex: 1 }]} onPress={() => handleAction(apt.id, 'cancelar')}>
+                          <X size={16} color={colors.error} /><Text style={s.actTxtR}>Cancelar</Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
                   )}
                 </Card>

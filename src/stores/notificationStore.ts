@@ -17,6 +17,7 @@ interface NotificationState {
   fetchNotifications: () => Promise<void>;
   markAsRead: (notificationId: string) => void;
   markAllAsRead: () => void;
+  clearReadNotifications: () => Promise<void>;
   addNotification: (title: string, message: string) => void;
   getNotificationsByPhone: (phone: string) => Notification[];
 }
@@ -62,6 +63,17 @@ export const useNotificationStore = create<NotificationState>()(
           notifications: state.notifications.map((n) => ({ ...n, read: true })),
           unreadCount: 0,
         }));
+      },
+
+      clearReadNotifications: async () => {
+        NotificationApiService.clearRead().catch(() => {});
+        set((state) => {
+          const remaining = state.notifications.filter((n) => !n.read);
+          return {
+            notifications: remaining,
+            unreadCount: remaining.filter((n) => !n.read).length,
+          };
+        });
       },
 
       addNotification: (title, message) => {

@@ -121,6 +121,15 @@ export default function AdminDashboard() {
 
           {upcomingApts.length > 0 ? upcomingApts.map((apt) => {
             const svc = services.find((s) => s.id === apt.serviceId) || apt.service;
+            
+            const now = new Date();
+            const aptDateTime = new Date(`${apt.date}T${apt.time}:00`);
+            const diffMinutes = (now.getTime() - aptDateTime.getTime()) / (1000 * 60);
+            const isPast30Min = diffMinutes > 30;
+
+            const isAutoCompleted = (apt.status === AppointmentStatus.PENDING || apt.status === AppointmentStatus.CONFIRMED) && isPast30Min;
+            const displayStatus = isAutoCompleted ? AppointmentStatus.COMPLETED : apt.status;
+
             return (
               <Card key={apt.id} style={s.aptCard} padding="md">
                 <View style={s.aptRow}>
@@ -132,7 +141,7 @@ export default function AdminDashboard() {
                     <Text style={s.aptService}>{svc?.name ?? 'Consulta'}</Text>
                     <Text style={s.aptDentist}>{apt.dentistName}</Text>
                   </View>
-                  <Badge variant="status" status={apt.status} />
+                  <Badge variant="status" status={displayStatus} />
                 </View>
               </Card>
             );
