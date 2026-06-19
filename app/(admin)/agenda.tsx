@@ -295,6 +295,16 @@ export default function AgendaScreen() {
     }, [])
   );
 
+  // Relógio interno para re-avaliar o atraso das consultas em tempo real na tela
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 15000); // Executa a cada 15 segundos para atualizar a tela sem requisição de rede
+    return () => clearInterval(timer);
+  }, []);
+
   // Garante que, ao abrir a tela (mount), as datas são resetadas para o dia atual de hoje
   useEffect(() => {
     const today = getTodayStr();
@@ -490,7 +500,7 @@ export default function AgendaScreen() {
               const patient = apt.user ?? (apt.userId ? getPatientByPhone(apt.phone) : undefined);
 
               // Calcula se passou de 30 minutos do horário marcado ou se é de dia anterior
-              const now = new Date();
+              const now = currentTime;
               const aptDateTime = new Date(`${apt.date}T${apt.time}:00`);
               const diffMinutes = (now.getTime() - aptDateTime.getTime()) / (1000 * 60);
               const isPast30Min = diffMinutes > 30;

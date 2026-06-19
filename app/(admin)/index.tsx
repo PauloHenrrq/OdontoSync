@@ -1,5 +1,5 @@
 // OdontoSync — Admin: Dashboard (Stitch: bb6e9a0c)
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -33,8 +33,18 @@ export default function AdminDashboard() {
 
   const [timeRange, setTimeRange] = useState<'today' | 'overall'>('today');
 
+  // Relógio interno para re-avaliar o status dos badges no dashboard em tempo real
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 15000); // 15 segundos
+    return () => clearInterval(timer);
+  }, []);
+
   const getTodayStr = () => {
-    const d = new Date();
+    const d = currentTime;
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const dd = String(d.getDate()).padStart(2, '0');
@@ -122,7 +132,7 @@ export default function AdminDashboard() {
           {upcomingApts.length > 0 ? upcomingApts.map((apt) => {
             const svc = services.find((s) => s.id === apt.serviceId) || apt.service;
             
-            const now = new Date();
+            const now = currentTime;
             const aptDateTime = new Date(`${apt.date}T${apt.time}:00`);
             const diffMinutes = (now.getTime() - aptDateTime.getTime()) / (1000 * 60);
             const isPast30Min = diffMinutes > 30;
